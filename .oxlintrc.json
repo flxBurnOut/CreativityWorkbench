@@ -1,0 +1,13 @@
+{
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    ".vinext/**",
+    ".next/**",
+    ".wrangler/**",
+    "next-env.d.ts"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "app-scaffold",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vinext dev --port 3001",
+    "build": "vinext build",
+    "start": "wrangler dev --config dist/server/wrangler.json",
+    "workbench": "node scripts/workbench.mjs",
+    "workbench:http": "node scripts/workbench-http.mjs",
+    "workbench:mcp": "node scripts/workbench-mcp.mjs",
+    "test": "node --test tests/runtime.test.mjs",
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit --incremental false"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-server-dom-webpack": "19.2.6",
+    "vinext": "1.0.0-beta.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.37.1",
+    "@cloudflare/workers-types": "4.20260515.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "oxlint": "1.76.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "5.9.3",
+    "vite": "8.0.13",
+    "wrangler": "4.92.0"
+  }
+}
