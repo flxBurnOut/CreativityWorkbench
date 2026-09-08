@@ -14,7 +14,7 @@
     "workbench": "node scripts/workbench.mjs",
     "workbench:http": "node scripts/workbench-http.mjs",
     "workbench:mcp": "node scripts/workbench-mcp.mjs",
-    "test": "node --experimental-strip-types --test tests/runtime.test.mjs tests/frontend.test.mjs",
+    "test": "node --experimental-strip-types --test tests/runtime.test.mjs tests/frontend.test.mjs tests/creative.test.mjs",
     "lint": "oxlint",
     "typecheck": "tsc --noEmit --incremental false"
   },

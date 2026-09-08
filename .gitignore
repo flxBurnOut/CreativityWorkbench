@@ -6,6 +6,7 @@ dist/
 next-env.d.ts
 *.tsbuildinfo
 .env*
+!.env.example
 work/
 outputs/
 *.log

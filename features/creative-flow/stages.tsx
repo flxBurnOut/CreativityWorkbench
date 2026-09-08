@@ -5,10 +5,12 @@ import { AssetImage, Button, Empty, Field, Icon, Modal } from '@/components/work
 import { imageFromFile } from '@/features/projects/local-store';
 import { CATEGORIES, CONTENT_SECTIONS, TYPE_LABELS, pruneAssets, removeConcept, type Category, type Concept, type ImageAsset, type Project, type WorkType } from '@/features/projects/model';
 
+import type { CreativeControls } from './creative-api';
+
 export type Notice = (message: string, undo?: () => void) => void;
 export type EditProject = (update: (project: Project) => Project) => void;
 export type DemoState = 'ready' | 'empty' | 'loading' | 'error';
-interface StageProps { project: Project; edit: EditProject; notice: Notice; unavailable: (action: string) => void; demo: boolean; demoState: DemoState }
+interface StageProps { project: Project; edit: EditProject; notice: Notice; unavailable: (action: string) => void; demo: boolean; demoState: DemoState; creative?: CreativeControls }
 
 export function UploadButton({ children = '上传图片', onUpload, notice, secondary = true }: { children?: string; onUpload: (asset: ImageAsset) => void; notice: Notice; secondary?: boolean }) {
   const input = useRef<HTMLInputElement>(null);
@@ -28,10 +30,10 @@ function changeUpstream(edit: EditProject, update: (project: Project) => Project
   edit(p => ({ ...update(p), upstreamChanged: p.upstreamChanged || p.concepts.some(c => c.savedAssetId) }));
 }
 
-export function CreativeStage({ project, edit, unavailable }: StageProps) {
+export function CreativeStage({ project, edit, creative, demo }: StageProps) {
   return <div className="stage-stack">
     <details className="surface original-idea quiet-details" open><summary><span><Icon name="leaf" />灵感起点</span><Icon name="chevron" /></summary><Field label="你最初的想法"><textarea className="idea-input" rows={2} value={project.idea} placeholder="围绕岭南文化，写下一句想法……" onChange={event => changeUpstream(edit, p => ({ ...p, idea: event.target.value }))} /></Field></details>
-    <section className="surface writing-surface"><div className="section-heading"><h3>当前创意方案</h3><AiNote /></div><textarea aria-label="当前创意方案" className="document-editor" rows={8} value={project.brief} placeholder={'让这个想法慢慢展开。\n\n你想讲述什么？希望谁看到？有什么一定要保留？\n可以直接写下自己的方案，也可以等接入 AI 后再一起完善。'} onChange={event => changeUpstream(edit, p => ({ ...p, brief: event.target.value }))} /><div className="writing-footer"><span>{project.brief.length} 字</span><div className="inline-actions"><Button variant="ghost" icon="spark" onClick={() => unavailable('帮我完善')}>帮我完善</Button><Button variant="ghost" icon="refresh" onClick={() => unavailable('换个方向')}>换个方向</Button></div></div></section>
+    <section className="surface writing-surface"><div className="section-heading"><h3>当前创意方案</h3><AiNote>{demo ? "演示不调用 AI" : "可用 AI 完善，也可直接编辑"}</AiNote></div><textarea aria-label="当前创意方案" className="document-editor" rows={8} value={project.brief} placeholder={'让这个想法慢慢展开。\n\n你想讲述什么？希望谁看到？有什么一定要保留？\n可以直接写下自己的方案，也可以点击“帮我完善”一起展开。'} onChange={event => changeUpstream(edit, p => ({ ...p, brief: event.target.value }))} /><div className="writing-footer"><span>{project.brief.length} 字</span><div className="inline-actions"><Button variant="ghost" icon="spark" disabled={creative?.busy} onClick={() => creative?.run('improve')}>帮我完善</Button><Button variant="ghost" icon="refresh" disabled={creative?.busy} onClick={() => creative?.run('redirect')}>换个方向</Button></div></div></section>
     <details className="surface quiet-details"><summary><span><Icon name="leaf" />岭南文化关联</span><Icon name="chevron" /></summary><Field label="当前项目的文化语境" hint="记录已确定的地域、时代、文化参考，区分事实与虚构。"><textarea rows={3} value={project.culture} placeholder="例如：当代广府街区的虚构故事；建筑与生活细节待补充参考……" onChange={event => changeUpstream(edit, p => ({ ...p, culture: event.target.value }))} /></Field></details>
   </div>;
 }
@@ -143,9 +145,9 @@ export function FinalStage({ project, edit, demo, demoState, notice }: StageProp
       <div className="output-actions">{project.type === 'novel' ? <Button variant="secondary" icon="download" onClick={downloadText}>下载演示文本</Button> : <Button variant="secondary" disabled icon="download">交付文件尚未生成</Button>}</div></> : !(demo && (demoState === 'loading' || demoState === 'error')) && <Empty title="作品会在这里与你见面" description="接入成品服务后，可在这里预览、下载，并提出下一次修改。" icon="gift" small />}</section></div>;
 }
 
-export function RequestComposer({ project, edit, unavailable, goToStage }: Pick<StageProps, 'project' | 'edit' | 'unavailable'> & { goToStage: (stage: number) => void }) {
+export function RequestComposer({ project, edit, unavailable, goToStage, creative }: Pick<StageProps, 'project' | 'edit' | 'unavailable' | 'creative'> & { goToStage: (stage: number) => void }) {
   const actions = ['按要求完善', '按要求修改', '生成美术提示词', '按要求修改', '修改成品'];
-  return <><div className="request-composer"><span className="composer-symbol"><Icon name="spark" size={22} /></span><label className="composer-field"><span className="visually-hidden">当前阶段的修改要求</span><textarea rows={2} value={project.requests[project.stage]} placeholder={project.stage === 3 ? '选中图片的“返工”可以修改具体对象；也可以先在这里记下整体要求……' : '用一句话，描述你想如何修改……'} onChange={event => edit(p => ({ ...p, requests: p.requests.map((value, index) => index === p.stage ? event.target.value : value) }))} /><span className="muted">修改要求与当前草稿关联 · AI 尚未接入</span></label><Button variant="secondary" onClick={() => unavailable(actions[project.stage])}>{actions[project.stage]}</Button></div><footer className="flow-footer"><div>{project.stage > 0 && <Button variant="ghost" icon="back" onClick={() => goToStage(project.stage - 1)}>上一步</Button>}{project.type === 'novel' && project.stage > 0 && project.stage < 4 && <Button variant="ghost" onClick={() => goToStage(4)}>纯文字作品，直接进入成品</Button>}</div>{project.stage < 4 && <Button onClick={() => goToStage(project.stage + 1)}>继续<Icon name="arrow" /></Button>}</footer></>;
+  return <><div className="request-composer"><span className="composer-symbol"><Icon name="spark" size={22} /></span><label className="composer-field"><span className="visually-hidden">当前阶段的修改要求</span><textarea rows={2} value={project.requests[project.stage]} placeholder={project.stage === 3 ? '选中图片的“返工”可以修改具体对象；也可以先在这里记下整体要求……' : '用一句话，描述你想如何修改……'} onChange={event => edit(p => ({ ...p, requests: p.requests.map((value, index) => index === p.stage ? event.target.value : value) }))} /><span className="muted">{project.stage === 0 ? '修改要求会随本次创意请求提交' : '修改要求与当前草稿关联 · 本阶段 AI 尚未接入'}</span></label><Button variant="secondary" disabled={project.stage === 0 && creative?.busy} onClick={() => project.stage === 0 ? creative?.run('revise') : unavailable(actions[project.stage])}>{actions[project.stage]}</Button></div><footer className="flow-footer"><div>{project.stage > 0 && <Button variant="ghost" icon="back" onClick={() => goToStage(project.stage - 1)}>上一步</Button>}{project.type === 'novel' && project.stage > 0 && project.stage < 4 && <Button variant="ghost" onClick={() => goToStage(4)}>纯文字作品，直接进入成品</Button>}</div>{project.stage < 4 && <Button onClick={() => goToStage(project.stage + 1)}>继续<Icon name="arrow" /></Button>}</footer></>;
 }
 
 export function TypePicker({ type, onChange }: { type: WorkType; onChange: (type: WorkType) => void }) { return <label className="type-picker"><span className="visually-hidden">作品类型</span><select value={type} onChange={event => onChange(event.target.value as WorkType)}>{Object.entries(TYPE_LABELS).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>; }

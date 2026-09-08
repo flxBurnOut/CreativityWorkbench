@@ -1,3 +1,4 @@
+import '../lib/workbench/env.mjs';
 import { createRuntimeServer } from '../lib/workbench/http-server.mjs';
 
 const port = Number(process.env.WORKBENCH_RUNTIME_PORT || 8791);
