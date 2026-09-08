@@ -2,7 +2,9 @@
 
 > 暂定名称：创意工作台。本文是产品思路与功能方案，更新于 2026-09-08。
 >
-> **WorkBuddy 核心接入：** 已封装 2 项项目 Skills、12 个 stdio MCP 工具及本机连接包生成命令 `npm run workbench:setup`，覆盖项目、文字、图像、视频和静态网站交付。WorkBuddy 实际加载由用户手动测试；使用方法见 [核心接入与验收](docs/WORKBUDDY_CORE.md)。历史章节中的“MCP 只读清单”已由本次核心接入替代。
+> **问题修复：** 当前问题处理、保留范围及回归说明见[2026-09-08 修复记录](docs/问题修复记录-2026-09-08.md)。
+
+> **WorkBuddy 核心接入：** 已封装 2 项项目 Skills、15 个 stdio MCP 工具及本机连接包生成命令 `npm run workbench:setup`，覆盖项目、文字、图像、视频和静态网站交付。WorkBuddy 实际加载由用户手动测试；使用方法见 [核心接入与验收](docs/WORKBUDDY_CORE.md)。历史章节中的“MCP 只读清单”已由本次核心接入替代。
 >
 > **2026-09-08 当前实现：保存、文字、图像、视频与网站交付已接线。** 视频支持分镜、WorkBuddy／外部 API、配音、字幕及本地 MP4 合成；网站支持隔离交互预览、修改与离线 ZIP。[视频与网站说明](docs/VIDEO_WEBSITE_RUNTIME.md)。 图像优先 WorkBuddy，同时保留外部 Images API；当前验证使用本地模拟，真实授权、生图效果和文化质量仍待验。文创确定为 3D 资产，安排在视频、网站之后。当前配置与限制见[运行说明](docs/MULTIMEDIA_RUNTIME.md)，第 13.9–14 节保留历史实现记录。
 

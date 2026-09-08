@@ -49,12 +49,12 @@ test('composition refuses missing narration and audio longer than the shot',asyn
   s.audio={...(await importMedia(await readFile(join(dir,'long.wav')),'wav',repo,{env:{}})),source:audioSource(s)};
   await assert.rejects(composeVideo({snapshot:p},repo,{env:{}}),e=>e.code==='long_audio');
 });
-test('WorkBuddy video handoff persists actual MP4, and cancellation rejects late output',async()=>{
+test('WorkBuddy video handoff persists actual MP4, and cancellation preserves late output for explicit adoption',async()=>{
   const {repo,p}=await setup();const manager=createTaskManager(repo,{env:{}});const input=request(p,'video-shot',{provider:'workbuddy',objectId:'shot-a'});await manager.submit(input);const waiting=await until(manager,input.id,'waiting_external');
   assert.match(waiting.handoff.output,/result\.mp4$/);assert.match(waiting.handoffMessage,/不要用示例/);assert.equal(waiting.dispatch,'manual');
   await writeFile(waiting.handoff.output,(await clips()).mp4);const done=await until(manager,input.id);assert.equal(done.result.videoClip.source,shotSource(p.video.shots[0],p.video.ratio));
   const adopted=applyTaskResult(p,done);assert.ok(adopted.video.shots[0].clip.fileId.endsWith('.mp4'));manager.stop();
-  const manager2=createTaskManager(repo,{env:{}});const next=request(p,'video-shot',{provider:'workbuddy',objectId:'shot-a'});await manager2.submit(next);const second=await until(manager2,next.id,'waiting_external');await manager2.cancel(next.id);await writeFile(second.handoff.output,(await clips()).mp4);assert.equal((await manager2.get(next.id)).status,'cancelled');manager2.stop();
+  const manager2=createTaskManager(repo,{env:{}});const next=request(p,'video-shot',{provider:'workbuddy',objectId:'shot-a'});await manager2.submit(next);const second=await until(manager2,next.id,'waiting_external');await manager2.cancel(next.id);await writeFile(second.handoff.output,(await clips()).mp4);assert.equal((await until(manager2,next.id)).recoveredAfterCancel,true);manager2.stop();
 });
 test('Runway sends documented inputs, preserves job ID on restart and never resubmits',async()=>{
   const {repo,p}=await setup();let posts=0,gets=0;const env={VIDEO_API_KEY:'test'};
@@ -91,4 +91,42 @@ test('output HTTP supports seek ranges, sandboxed HTML and hash checked backup r
     assert.equal((await fetch(base+'/v1/files/restore/'+stored.fileId,{method:'POST',body:'bad'})).status,400);
   }finally{server.closeAllConnections();server.close();}
   assert.deepEqual(byteRange('bytes=-10',100),{start:90,end:99});assert.equal(byteRange('bytes=-0',100),false);assert.equal(byteRange('bytes=100-',100),false);assert.equal(byteRange('bytes=0-1,3-4',100),false);
+});
+
+test('composition mixes original sound with narration and accepts literal subtitle punctuation', async () => {
+  const { repo, p, dir } = await setup();
+  const files = await clips();
+  const clip = await importMedia(files.mp4, 'mp4', repo, { env: {} });
+  const audio = await importMedia(files.wav, 'wav', repo, { env: {} });
+  const s = p.video.shots[0]; s.narration = '旁白'; s.subtitle = '字幕 {原文}, \\N 不应成为滤镜指令';
+  s.clip = { ...clip, source: shotSource(s, p.video.ratio) }; s.audio = { ...audio, source: audioSource(s) };
+  // Check both frequencies in decoded audio instead of merely asserting an audio track exists.
+  async function amplitudes(keepAudio) {
+    p.video.keepAudio = keepAudio;
+    const result = await composeVideo({ ...request(p, 'video-compose'), snapshot: p }, repo, { env: {} });
+    const path = join(dir, `mix-${keepAudio}.mp4`); await writeFile(path, await repo.output(result.videoFinal.fileId));
+    const pcm = join(dir, `mix-${keepAudio}.pcm`);
+    await mediaCommand(ffmpeg, ['-nostdin', '-v', 'error', '-i', path, '-ss', '0.2', '-t', '0.5', '-vn', '-ac', '1', '-ar', '8000', '-f', 'f32le', pcm]);
+    const bytes = await readFile(pcm);
+    const tone = frequency => {
+      let real = 0, imaginary = 0;
+      for (let i = 0; i < bytes.length / 4; i++) { const value = bytes.readFloatLE(i * 4); real += value * Math.cos(2 * Math.PI * frequency * i / 8000); imaginary += value * Math.sin(2 * Math.PI * frequency * i / 8000); }
+      return Math.hypot(real, imaginary) / (bytes.length / 4);
+    };
+    assert.match((await repo.output(result.videoFinal.subtitleFileId)).toString(), /\{原文\}, \\N/);
+    return { original: tone(440), narration: tone(600) };
+  }
+  const mixed = await amplitudes(true), replaced = await amplitudes(false);
+  assert.ok(mixed.original > 0.005, JSON.stringify(mixed));
+  assert.ok(mixed.narration > 0.02, JSON.stringify(mixed));
+  assert.ok(replaced.original < mixed.original / 10, JSON.stringify({ mixed, replaced }));
+});
+
+test('regenerating video plans preserves explicit subtitle and original-audio settings', async () => {
+  const { repo, p } = await setup(); p.video.keepAudio = true; p.video.burnSubtitles = false;
+  await repo.saveWorkspace(ws(p), 1, randomUUID());
+  const manager = createTaskManager(repo, { env: { DEEPSEEK_API_KEY: 'test' }, fetchImpl: async () => Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ ratio: '16:9', shots: [shot()] }) } }] }) });
+  const input = request(p, 'video-plan', { action: 'generate' }); await manager.submit(input);
+  const done = await until(manager, input.id);
+  assert.equal(done.result.videoPlan.keepAudio, true); assert.equal(done.result.videoPlan.burnSubtitles, false); manager.stop();
 });

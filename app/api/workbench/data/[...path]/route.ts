@@ -2,7 +2,7 @@
 async function proxy(request: Request, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
   const route = path.join('/');
-  if (!/^(workspace|status|settings|media|media\/[a-f0-9]{64}|files\/(mp4|wav|[a-f0-9]{64}\.(mp4|wav|html|zip|srt)|restore\/[a-f0-9]{64}\.(mp4|wav|html|zip|srt))|tasks|tasks\/[a-zA-Z0-9_-]{1,80}(\/(cancel|dismiss))?)$/.test(route)) return Response.json({ error: '接口不存在。' }, { status: 404 });
+  if (!/^(workspace|status|settings|recovery|media|media\/[a-f0-9]{64}|files\/(mp4|wav|[a-f0-9]{64}\.(mp4|wav|html|zip|srt)|restore\/[a-f0-9]{64}\.(mp4|wav|html|zip|srt))|tasks|tasks\/[a-zA-Z0-9_-]{1,80}(\/(cancel|dismiss))?)$/.test(route)) return Response.json({ error: '接口不存在。' }, { status: 404 });
   if (route === 'settings' && !['localhost', '127.0.0.1', '[::1]'].includes(new URL(request.url).hostname)) return Response.json({ error: 'API 配置仅限本机访问。' }, { status: 403 });
   const origin = request.headers.get('origin');
   if ((origin && origin !== new URL(request.url).origin) || request.headers.get('sec-fetch-site') === 'cross-site') return Response.json({ error: '请从当前工作台访问。' }, { status: 403 });

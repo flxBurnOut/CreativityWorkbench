@@ -132,7 +132,10 @@
         "task_cancel",
         "task_adopt",
         "media_import",
-        "project_deliver"
+        "project_deliver",
+        "task_dismiss",
+        "workspace_recover",
+        "storage_cleanup"
       ],
       "skills": [
         "workbench/skills/creativity-project",
@@ -140,6 +143,25 @@
       ],
       "configuration": "npm run workbench:setup",
       "validation": "local-stdio-and-files-tested; WorkBuddy-client-and-real-provider-not-verified"
+    },
+    {
+      "id": "service-settings",
+      "name": "本机 API 与默认生成服务配置",
+      "transport": "http",
+      "endpoint": "/v1/settings",
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "validation": "local-tested; credentials-not-returned"
+    },
+    {
+      "id": "workspace-recovery",
+      "name": "检查并恢复上一版工作区快照",
+      "transport": "http",
+      "endpoint": "/v1/recovery",
+      "method": "POST",
+      "validation": "local-tested; explicit-recovery-token-required"
     }
   ],
   "editorModules": []

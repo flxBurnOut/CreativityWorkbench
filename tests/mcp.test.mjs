@@ -59,7 +59,7 @@ test('real stdio client: discovery, conversation writing, durable retries, versi
   const { client, call, until, connect, url } = await setup(t);
   const tools = await client.listTools();
   assert.deepEqual(tools.tools.map(t => t.name).sort(), Object.keys(coreTools).sort());
-  assert.equal(tools.tools.length, 12);
+  assert.ok(tools.tools.some(t => t.name === 'task_dismiss'));
   assert.ok(tools.tools.find(t => t.name === 'project_update').inputSchema.properties.patch.properties.website);
   assert.equal((await client.listResources()).resources[0].uri, 'workbench://manifest');
   assert.ok(JSON.parse((await client.readResource({ uri: 'workbench://manifest' })).contents[0].text).capabilities.length);
@@ -137,7 +137,7 @@ test('MCP hands images and audio to its calling conversation, imports actual vid
   assert.equal(request.inputImages.length, 1); assert.deepEqual(await readFile(request.inputImages[0]), png);
   await call('task_cancel', { taskId: editTask.requestId });
   await writeFile(editing.handoff.output, png);
-  assert.equal((await call('task_get', { taskId: editTask.requestId })).status, 'cancelled');
+  assert.equal((await call('task_get', { taskId: editTask.requestId })).recoveredAfterCancel, true);
   current = await call('project_get', { projectId });
   const imageImport = { requestId: uid(), projectId, expectedVersion: current.projectVersion, filename: 'reference.png', role: 'image' };
   await writeFile(join(current.inbox, 'reference.png'), png);

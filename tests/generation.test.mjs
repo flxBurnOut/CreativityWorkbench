@@ -138,11 +138,11 @@ test('WorkBuddy sends the documented message, imports assigned output, and resum
   const done=await reopened.get(input.id);assert.equal(done.status,'succeeded');assert.ok(done.result.asset.fileId);
 });
 
-test('manual WorkBuddy handoff is explicit and cancelled tasks ignore late pictures',async()=>{
+test('manual WorkBuddy handoff retains late pictures after cancellation without adopting them',async()=>{
   const{repo}=await setup();const p=project();await repo.saveWorkspace(workspace(p),0,randomUUID());const manager=createTaskManager(repo,{env:{}});
   const input=request(p,'cover',{provider:'workbuddy',ratio:'1:1'});await manager.submit(input);let task=await until(manager,input.id,'waiting_external');
   for(let i=0;i<100&&task.dispatch!=='manual';i++){await new Promise(r=>setTimeout(r,10));task=await manager.get(input.id);}
-  assert.equal(task.dispatch,'manual');assert.equal(task.result,undefined);await manager.cancel(input.id);await writeFile(task.handoff.output,await png());assert.equal((await manager.get(input.id)).status,'cancelled');
+  assert.equal(task.dispatch,'manual');assert.equal(task.result,undefined);await manager.cancel(input.id);await writeFile(task.handoff.output,await png());assert.equal((await manager.get(input.id)).status,'succeeded');assert.equal((await manager.get(input.id)).recoveredAfterCancel,true);
   await manager.dismiss(input.id);assert.equal((await manager.get(input.id)).dismissed,true);
 });
 

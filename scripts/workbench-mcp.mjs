@@ -16,7 +16,7 @@ server.registerResource('manifest', 'workbench://manifest', { mimeType: 'applica
 for (const [name, tool] of Object.entries(coreTools)) {
   server.registerTool(name, {
     description: tool.description, inputSchema: tool.schema,
-    annotations: { readOnlyHint: Boolean(tool.readOnly), destructiveHint: Boolean(tool.destructive) || ['project_update', 'task_adopt', 'media_import'].includes(name), idempotentHint: true, openWorldHint: Boolean(tool.openWorld) },
+    annotations: { readOnlyHint: Boolean(tool.readOnly), destructiveHint: Boolean(tool.destructive) || ['project_update', 'task_adopt', 'media_import'].includes(name), idempotentHint: tool.idempotent !== false, openWorldHint: Boolean(tool.openWorld) },
   }, async input => {
     try {
       const value = await runtime.call(name, input);

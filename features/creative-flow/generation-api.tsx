@@ -37,8 +37,8 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
     const poll = async () => { await refresh(); if (live) timeout = setTimeout(poll,2500); };
     void poll(); return () => { live=false;clearTimeout(timeout); };
   },[project?.id,demo,refresh]);
-  useEffect(() => { api<ServiceStatus>('status').then(data => setProvider(data.images.provider)).catch(() => {}); },[]);
-  async function run(kind:string,args:Record<string,unknown>={}) {
+  useEffect(() => { const refreshProvider=()=>{void api<ServiceStatus>('status').then(data => setProvider(data.images.provider)).catch(() => {});}; refreshProvider(); window.addEventListener('workbench-settings-saved',refreshProvider); return ()=>window.removeEventListener('workbench-settings-saved',refreshProvider); },[]);
+  async function run(kind:string,args:Record<string,unknown>={},retryOf?:string) {
     if (!current.current || busy.current) return;
     if (demo) { notice('演示项目不调用生成服务，请新建真实项目。'); return; }
     busy.current=true;setSubmitting(true);setError(''); const id=current.current.id;
@@ -46,8 +46,8 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
       if (uncertain.current) throw new Error('上次提交结果尚未确认，请先查询该请求，避免重复生成。');
       await flush();
       const p=current.current; if (!p || p.id!==id) return;
-      const options=['image','cover'].includes(kind)?{...args,provider,ratio}:args;
-      const request={id:crypto.randomUUID(),projectId:id,kind,args:options,source:taskSource(p,kind,options)};
+      const options=['image','cover'].includes(kind)?{provider,ratio,...args}:args;
+      const request={id:crypto.randomUUID(),projectId:id,kind,args:options,source:taskSource(p,kind,options),...(retryOf?{retryOf}:{})};
       uncertain.current=request;
       const task=await api<GenerationTask>('tasks','POST',request); uncertain.current=null;
       if (current.current?.id===id) setTasks(previous=>[task,...previous.filter(t=>t.id!==task.id)]);
@@ -79,10 +79,10 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
       const preview=r?.brief||r?.notes||r?.replacement||(r?.sections&&Object.entries(r.sections).map(([k,v])=>(sectionNames[k]||k)+'\n'+v).join('\n\n'))||r?.art?.fullPrompt||(r?.objects&&r.objects.map(o=>o.name+'：'+o.description).join('\n\n'))||r?.novel?.text||'';
       return <article className="surface task-card" key={task.id}><div className="section-heading"><div><h3>{names[task.kind]}{task.targetName ? ` · ${task.targetName}` : ""} · {statuses[task.status]}</h3><p>{new Date(task.createdAt).toLocaleString('zh-CN')}{task.dismissed?' · 已收起／采用':''}</p></div>{!['succeeded','failed','cancelled'].includes(task.status)&&<Button variant="ghost" onClick={async()=>{try{await api('tasks/'+task.id+'/cancel','POST',{});await refresh();}catch(e){setError(String(e));}}}>取消等待</Button>}</div>
         {['queued','running'].includes(task.status)&&<p role="status">可以继续编辑或离开页面，任务记录会保留。返回结果不会自动覆盖当前内容。</p>}
-        {task.status==='waiting_external'&&<p role="status">{task.dispatch==='manual'?'请复制请求到同一台电脑的 WorkBuddy，由它生成并保存结果。':task.dispatch==='pending'?'正在向 WorkBuddy 发送请求。':'已向 WorkBuddy 发送请求，等待它生成媒体文件并保存回任务目录。'}若 WorkBuddy 提出授权问题，请在该应用处理。</p>}
+        {task.status==='waiting_external'&&<p role="status">{task.dispatch==='manual'?'请复制请求到同一台电脑的 WorkBuddy，由它生成并保存结果。':task.dispatch==='pending'?'正在向 WorkBuddy 发送请求。':task.dispatch==='conversation'?'请在发起任务的 WorkBuddy 对话中完成媒体生成并写回文件。':'已向 WorkBuddy 发送请求，等待它生成媒体文件并保存回任务目录。'}若 WorkBuddy 提出授权问题，请在该应用处理。</p>}
         {task.status==='waiting_provider'&&<p role="status">任务编号已保存，刷新只查询进度。媒体下载和处理期间可继续编辑。</p>}
         {task.handoffMessage&&['waiting_external','uncertain','failed'].includes(task.status)&&<details><summary>WorkBuddy 请求与交接</summary><textarea readOnly aria-label="WorkBuddy 图片请求" rows={5} value={task.handoffMessage}/><Button variant="secondary" onClick={()=>void navigator.clipboard.writeText(task.handoffMessage!).then(()=>notice('已复制 WorkBuddy 请求')).catch(()=>notice('复制失败，请选中文字手动复制。'))}>复制请求</Button></details>}
-        {task.error&&<p role="status">{task.error}</p>}{task.note&&<p>{task.note}</p>}
+        {task.recoveredAfterCancel&&<p role="status">已找回取消等待后完成的结果，可预览后决定是否采用。</p>}{task.error&&<p role="status">{task.error}</p>}{task.note&&<p>{task.note}</p>}
         {r?.asset&&<><AssetImage asset={r.asset} alt="生成图片预览" className="generated-image"/><a href={imageUrl(r.asset)} download={r.asset.name+'.png'}>下载原图</a><details><summary>实际出图提示词</summary><p className="creative-text">{r.asset.source?.prompt}</p></details></>}
         <OutputTaskPreview task={task}/>
         {preview&&<Field label="结果预览"><textarea readOnly rows={7} value={preview}/></Field>}
@@ -91,6 +91,8 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
         {r?.art&&<p className="muted">参考图片用途作为文字约束使用；当前美术方案不包含自动看图分析。</p>}
         {task.status==='succeeded'&&!task.dismissed&&!r?.notes&&<>{stale&&<p className="muted">生成依据已更新，结果保留供复制或下载，不能覆盖当前内容。</p>}<Button disabled={stale} onClick={()=>void adopt(task)}>{r?.asset?(task.kind==='cover'?'采用封面':'加入候选图'):'采用结果'}</Button></>}
         {task.status==='succeeded'&&!task.dismissed&&r?.title&&<Button variant="secondary" disabled={stale} onClick={()=>void adopt(task,true)}>采用并使用建议名称</Button>}
+        {['failed','cancelled'].includes(task.status)&&!task.dismissed&&<Button variant="secondary" disabled={submitting} onClick={()=>void run(task.kind,task.args,task.id)}>重新生成（新请求）</Button>}
+        {task.status==='uncertain'&&!task.dismissed&&<Button variant="ghost" onClick={()=>void dismiss(task.id)}>已核实，收起并释放占位</Button>}
         {['succeeded','failed','cancelled'].includes(task.status)&&!task.dismissed&&<Button variant="ghost" onClick={()=>void dismiss(task.id)}>收起结果</Button>}
       </article>;
     })}

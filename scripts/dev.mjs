@@ -1,3 +1,4 @@
+import '../lib/workbench/env.mjs';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
