@@ -14,16 +14,22 @@
     "workbench": "node scripts/workbench.mjs",
     "workbench:http": "node scripts/workbench-http.mjs",
     "workbench:mcp": "node scripts/workbench-mcp.mjs",
-    "test": "node --experimental-strip-types --test tests/runtime.test.mjs tests/frontend.test.mjs tests/creative.test.mjs",
+    "workbench:setup": "node scripts/workbench-setup.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "lint": "oxlint",
     "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
+    "fflate": "^0.8.3",
+    "ffmpeg-static": "^5.3.0",
+    "ffprobe-static": "^3.1.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-server-dom-webpack": "19.2.6",
-    "vinext": "1.0.0-beta.5"
+    "sharp": "^0.35.4",
+    "vinext": "1.0.0-beta.5",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "creativity-workbench": {
+      "type": "stdio",
+      "command": "ABSOLUTE_PATH_TO_NODE",
+      "args": ["ABSOLUTE_REPOSITORY_PATH/scripts/workbench-mcp.mjs", "--ensure-runtime"],
+      "timeout": 210000
+    }
+  }
+}

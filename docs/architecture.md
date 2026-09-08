@@ -1,32 +1,40 @@
 # 当前架构
 
-沿用参考项目的分层：Web 页面 → HTTP 接入 → 共享运行时 → 适配器。CLI 和 MCP 共用该运行时的清单读取逻辑。
-
-前端已实现项目首页、新建与管理、五阶段创作界面、设置、帮助和四类独立演示。后端已接入第一阶段创意服务与 DeepSeek V4 Flash 适配器；HTTP 支持创意请求与配置状态，CLI 发现/诊断和 MCP 只读清单继续保留。没有通用任务队列和成品生成。
-
-前端采用用户确定的 B＋C 融合岭南主题：瓷白工作面、青绿主色、柔和圆角、骑楼院落与葵扇彩瓷插画。暂定产品名为“创意工作台”，最终品牌未定义。设计基准见 [README](../README.md#138-bc-融合主题当前基准)。
+更新日期：2026-09-08。Web 页面 → 同源 HTTP 代理 → 本机共享 Runtime → 持久化与模型适配器；WorkBuddy Skills → stdio MCP → 同一 Runtime 的核心接口。CLI 保留发现／诊断，并提供本机接入包生成命令。
 
 | 模块 | 职责 |
 | --- | --- |
-| `app/(workbench)/page.tsx` | 挂载前端工作台 |
-| `features/creative-flow/workbench.tsx` | 项目导航、首页、弹窗、演示与状态反馈 |
-| `features/creative-flow/stages.tsx` | 各类型内容编辑、提示词、概念图片、成品预览布局 |
-| `features/creative-flow/creative-api.tsx` | 创意请求、取消、预览采用、旧结果保护与配置状态 |
-| `app/api/workbench/creative/route.ts` | 同源 Web 接口、请求体限制与 Runtime 转发 |
-| `lib/workbench/creative-brief.mjs` | 输入校验、岭南文化规则、结构化创意编排 |
-| `lib/workbench/adapters/deepseek.mjs` | DeepSeek 请求、返回校验与错误脱敏 |
-| `features/projects/model.ts` | 项目结构、持久化格式校验、图片引用整理与示例工厂 |
-| `features/projects/local-store.ts` | IndexedDB 读写、版本冲突检测、图片输入校验 |
-| `features/projects/use-project-store.ts` | 自动暂存队列、恢复、失败与临时模式 |
-| `components/workbench/ui.tsx` | 按钮、字段、原生对话框、图片预览与空状态 |
-| `app/globals.css` / `public/art/` | 主题、响应式布局、原创 SVG 场景 |
+| `features/creative-flow/workbench.tsx` / `stages.tsx` | 岭南主题项目管理、五阶段编辑、概念图及短篇交付 |
+| `features/creative-flow/generation-api.tsx` | 任务提交、查询、取消等待、结果预览／采用、服务状态 |
+| `lib/workbench/project-core.mjs` | Web 与 MCP 共享项目默认值、当前输入校验和结果采用 |
+| `lib/workbench/core-contract.mjs` / `core-service.mjs` | 12 项核心工具的参数约束、项目更新、采用、媒体导入与交付 |
+| `scripts/workbench-mcp.mjs` / `lib/workbench/mcp-runtime.mjs` | stdio 协议、共享 Runtime 发现与按需启动，不另建数据写入器 |
+| `workbench/skills/` / `scripts/workbench-setup.mjs` | 两项 WorkBuddy Skills、ZIP 与本机连接配置 |
+| `features/projects/server-store.ts` / `use-project-store.ts` | 文件上传、服务端快照、保存串行化、旧草稿迁移 |
+| `features/projects/storage-actions.tsx` | 项目及图片备份导出、独立副本导入 |
+| `app/api/workbench/data/[...path]/route.ts` | 同源代理、路由及请求大小限制 |
+| `lib/workbench/http-server.mjs` | 本机 HTTP 接口，项目、媒体、任务和配置状态 |
+| `lib/workbench/repository.mjs` | 版本快照、文件读写互斥、原子替换、图片解码与哈希文件 |
+| `lib/workbench/tasks.mjs` / `task-contract.mjs` | 持久任务、输入快照、提交去重、恢复和取消 |
+| `lib/workbench/generation.mjs` | 各阶段编排、输出校验、原图与美术参考输入 |
+| `lib/workbench/adapters/` | DeepSeek 文字、WorkBuddy 官方消息、外部 Images API |
 
-当前项目信息与图片 Blob 作为一个版本化工作区快照写入浏览器 IndexedDB。写入串行化，并检查数据库版本，避免另一页面的旧快照覆盖较新数据。只有事务提交成功才显示“已暂存到此浏览器”；格式错误不会重置原有记录。临时模式需要用户主动选择，不写入数据库。
+项目保存在 `work/data/workspace.json`，保留上一确认快照；图片解码后规范化为独立 PNG，以内容哈希引用。任务及生成依据独立保存。每次保存携带修订号和写入 ID，多页面冲突时拒绝覆盖，提示导出当前草稿后刷新。当前设计只支持一个 Runtime 写同一目录，不是多用户共享数据库。
 
-演示项目由独立前端状态持有，离开后不写入真实项目；演示结果均标明非生成成品。页面使用 hash 保存导航位置，项目内部阶段保存在项目草稿中。浏览器后退与重新打开支持恢复。
+旧 IndexedDB 仅用于迁移或主动导入，原副本保留。空服务首次读取可迁移旧项目；服务已有数据时由设置页显式导入为新项目。显式 JSON 备份可以包含图片数据；日常项目快照不内嵌 Base64。删除项目或引用不立即清除媒体文件，以保留撤销、历史及任务输入；尚未提供磁盘垃圾回收。完整灾备需停服务后复制整个数据目录。
 
-图片不转成 Base64 放进文本记录，直接使用 IndexedDB 结构化克隆保存 Blob，并通过受控 object URL 展示。引用清理保留仍被封面、美术参考或候选/选定参考使用的图片。删除的短暂撤销在当前页面内保留必要对象。
+任务在调用供应商前持久化，重复请求 ID 不重复生成。运行时同时处理至多两项调用；刷新只查询已有任务。服务重启后，已发送 WorkBuddy 的任务可检查既定结果文件；中断的同步调用标为待核实，不能假装找回供应商结果或自动重发。取消表示停止接收，WorkBuddy 自身任务需在那里取消。外部执行状态不明确时保留任务。
 
-正式目标仍为页面 → HTTP → 共享 Runtime → 适配器；本地草稿是获准的前端阶段过渡存储。后续替换存储入口、补充服务端项目与任务接口；现有前端暂存不等于服务端 P1 验收通过。能力清单仅包含 `creative-brief`，需要 `DEEPSEEK_API_KEY`；配置状态不代表账户余额和真实连通性已通过验证。
+WorkBuddy 使用官方本地助理消息接口发送任务说明，输入和输出限制在当前任务目录。这是工作台定义的本机文件交接约定，官方接口没有被假定提供图片返回字段。外部接口支持 Images generations JSON 和 edits multipart，原图及参考图作为实际 PNG 输入。外部模型只能提供候选结果，用户采用后才进入当前项目。
 
-技术基础：React、TypeScript、Vinext/Vite、Node.js；保留本地构建所需配置。未配置云端站点、数据库或部署资源。
+上述消息派发仍供 Web 使用。MCP 从 WorkBuddy 内调用时强制使用 conversation 交接，不再给 WorkBuddy 自身发消息。文字、分镜与网站结构可由当前对话模型写回，后台文字生成器继续保留。核心写入与 Web 保存共用 Repository 队列；核心操作回执和项目原子保存，按项目哈希检查版本，防止并发覆盖。输入文件仅从项目专属 inbox 接收，输出包括受控 exports 下的 TXT/Markdown。实际安装步骤和验证边界见 [WorkBuddy 核心接入](WORKBUDDY_CORE.md)。
+
+前端演示独立于真实项目；服务密钥仅在本机服务端环境中配置，浏览器不保存密钥。Runtime 限本机访问并拒绝 Origin，Web 代理校验同源。未部署云站点或数据库。详细协议、限制与启动方式见[多媒体运行说明](MULTIMEDIA_RUNTIME.md)。
+
+## 视频与网站扩展
+
+`output-generation.mjs` 编排分镜、镜头、配音、合成及网站任务；`output-contract.mjs` 在前后端共享结构、媒体引用和版本依据。`adapters/video.mjs` 实现 Runway Gen-4.5 的 POST / GET 和受限 CDN 下载。外部任务编号持久化后，刷新与重启只查询，不自动重发。音视频文件回收与转码在后台处理，查询接口及时返回；取消不接受迟到输出。
+
+`video-media.mjs` 用实际 FFprobe / FFmpeg 解码、规范化与合成。临时处理目录随机生成并限制在数据根的 render 内，执行使用参数数组，不使用 shell 拼接。`website.mjs` 校验 JSON 后编译静态 HTML，转义文本，只嵌入项目图片；预览受 iframe 和响应 CSP 双层 sandbox 约束，不接触父页面或密钥。
+
+`delivery-stages.tsx` 提供分镜编辑、逐镜头生成／导入、声音、合成和网站生成／编辑／预览／下载。文件放入 `files/<sha256>.<ext>`，Web 代理传递 Range、Content-Range 及安全响应头。备份版本2加入已采用的媒体与网站文件，导入检查哈希和解码；原版本1仍可读取。完整服务说明见 [VIDEO_WEBSITE_RUNTIME.md](VIDEO_WEBSITE_RUNTIME.md)。

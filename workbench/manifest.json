@@ -1,5 +1,146 @@
 {
   "schemaVersion": 1,
-  "capabilities": [{ "id": "creative-brief", "name": "创意方案", "transport": "http", "endpoint": "/v1/creative/brief", "method": "POST", "provider": "deepseek", "model": "deepseek-v4-flash", "requires": ["DEEPSEEK_API_KEY"] }],
+  "capabilities": [
+    {
+      "id": "creative-brief",
+      "name": "创意方案",
+      "transport": "http",
+      "endpoint": "/v1/creative/brief",
+      "method": "POST",
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "requires": [
+        "DEEPSEEK_API_KEY"
+      ],
+      "validation": "local-mock-only"
+    },
+    {
+      "id": "text-generation-task",
+      "name": "文字生成与修改任务",
+      "transport": "http",
+      "endpoint": "/v1/tasks",
+      "method": "POST",
+      "kinds": [
+        "creative",
+        "content",
+        "art",
+        "objects",
+        "novel"
+      ],
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "requires": [
+        "DEEPSEEK_API_KEY"
+      ],
+      "validation": "local-mock-only"
+    },
+    {
+      "id": "image-generation-task",
+      "name": "概念图与封面生成、原图编辑",
+      "transport": "http",
+      "endpoint": "/v1/tasks",
+      "method": "POST",
+      "kinds": [
+        "image",
+        "cover"
+      ],
+      "providers": [
+        "workbuddy",
+        "external"
+      ],
+      "configuration": {
+        "workbuddy": "WORKBUDDY_ACCESS_TOKEN or explicit manual handoff",
+        "external": "IMAGE_API_BASE_URL, IMAGE_API_KEY, IMAGE_API_MODEL"
+      },
+      "validation": "local-mock-only"
+    },
+    {
+      "id": "workspace-storage",
+      "name": "项目与媒体保存",
+      "transport": "http",
+      "endpoint": "/v1/workspace",
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "validation": "local-tested"
+    },
+    {
+      "id": "video-generation-task",
+      "name": "视频分镜、镜头、旁白与自动合成",
+      "transport": "http",
+      "endpoint": "/v1/tasks",
+      "method": "POST",
+      "kinds": [
+        "video-plan",
+        "video-shot",
+        "video-audio",
+        "video-compose"
+      ],
+      "providers": [
+        "deepseek",
+        "workbuddy",
+        "runway-gen4.5",
+        "local-ffmpeg"
+      ],
+      "validation": "local-files-and-mock-tested; real-provider-not-verified"
+    },
+    {
+      "id": "website-generation-task",
+      "name": "静态网站生成、修改与打包",
+      "transport": "http",
+      "endpoint": "/v1/tasks",
+      "method": "POST",
+      "kinds": [
+        "website",
+        "website-build"
+      ],
+      "providers": [
+        "deepseek",
+        "local-static-compiler"
+      ],
+      "validation": "local-mock-only"
+    },
+    {
+      "id": "delivery-files",
+      "name": "媒体文件导入、成品下载与分段播放",
+      "transport": "http",
+      "endpoint": "/v1/files/:fileId",
+      "validation": "local-tested",
+      "method": "GET",
+      "uploadEndpoints": [
+        "/v1/files/mp4",
+        "/v1/files/wav"
+      ],
+      "restoreEndpoint": "/v1/files/restore/:fileId"
+    },
+    {
+      "id": "workbuddy-core-mcp",
+      "name": "WorkBuddy 核心对话创作与交付",
+      "transport": "stdio-mcp",
+      "entrypoint": "scripts/workbench-mcp.mjs",
+      "runtimeEndpoint": "/v1/core/:tool",
+      "tools": [
+        "workbench_status",
+        "project_list",
+        "project_get",
+        "project_create",
+        "project_update",
+        "task_start",
+        "task_list",
+        "task_get",
+        "task_cancel",
+        "task_adopt",
+        "media_import",
+        "project_deliver"
+      ],
+      "skills": [
+        "workbench/skills/creativity-project",
+        "workbench/skills/creativity-media"
+      ],
+      "configuration": "npm run workbench:setup",
+      "validation": "local-stdio-and-files-tested; WorkBuddy-client-and-real-provider-not-verified"
+    }
+  ],
   "editorModules": []
 }

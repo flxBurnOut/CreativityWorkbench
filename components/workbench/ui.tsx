@@ -56,7 +56,7 @@ export function Modal({ title, subtitle, children, onClose, wide = false }: { ti
 }
 
 export function AssetImage({ asset, alt, className = '' }: { asset?: ImageAsset; alt: string; className?: string }) {
-  const [url, setUrl] = useState(asset?.demoSrc ?? '');
+  const [url, setUrl] = useState(asset?.fileId ? '/api/workbench/data/media/' + asset.fileId : asset?.demoSrc ?? '');
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     setFailed(false);
@@ -64,8 +64,8 @@ export function AssetImage({ asset, alt, className = '' }: { asset?: ImageAsset;
       const next = URL.createObjectURL(asset.blob); setUrl(next);
       return () => URL.revokeObjectURL(next);
     }
-    setUrl(asset?.demoSrc ?? '');
-  }, [asset?.blob, asset?.demoSrc]);
+    setUrl(asset?.fileId ? '/api/workbench/data/media/' + asset.fileId : asset?.demoSrc ?? '');
+  }, [asset?.blob, asset?.demoSrc, asset?.fileId]);
   if (!url || failed) return <div className={`image-fallback ${className}`}><Icon name="image" size={30} /><span>{failed ? '图片暂时无法显示' : '还没有图片'}</span></div>;
   return <img src={url} className={className} alt={alt} onError={() => setFailed(true)} />;
 }
