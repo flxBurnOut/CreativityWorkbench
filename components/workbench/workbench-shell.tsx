@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
 
 export function AppShell({ children }: { children: ReactNode }) {
-  return <main className="app-shell">{children}</main>;
+  return <div className="app-shell">{children}</div>;
 }

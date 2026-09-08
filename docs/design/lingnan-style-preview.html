@@ -1,0 +1,231 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+#lingnan-review { color-scheme:light; --ln-decoration:1; font-family:"Microsoft YaHei","PingFang SC",sans-serif; }
+#lingnan-review * { box-sizing:border-box; }
+#lingnan-review .ln-option { margin:0 0 36px; }
+#lingnan-review .ln-caption { display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 20px; padding:18px 6px; color:light-dark(#293630,#eee9df); }
+#lingnan-review .ln-caption strong { font-size:21px; font-weight:500; }
+#lingnan-review .ln-caption span { font-size:13px; }
+#lingnan-review .ln-app { --ln-bg:#eeeae0; --ln-paper:#fbf8ef; --ln-ink:#263e38; --ln-muted:#566760; --ln-line:#c2c8b7; --ln-accent:#245c4f; --ln-soft:#dee5d6; --ln-gold:#aa7338; --ln-on:#fff9eb; position:relative; overflow:hidden; background:var(--ln-bg); color:var(--ln-ink); border:1px solid var(--ln-line); font-size:14px; line-height:1.6; }
+#lingnan-review .ln-app.b { --ln-bg:#f1e6d6; --ln-paper:#fff9ed; --ln-ink:#4f2e32; --ln-muted:#785957; --ln-line:#d8bea0; --ln-accent:#8a3947; --ln-soft:#f0dfd7; --ln-gold:#a67532; --ln-on:#fff8e8; }
+#lingnan-review .ln-app.c { --ln-bg:#1e3935; --ln-paper:#f1ecd9; --ln-ink:#233d33; --ln-muted:#556553; --ln-line:#b5b89d; --ln-accent:#355d43; --ln-soft:#e0e2c9; --ln-gold:#a78545; --ln-on:#fffbe9; }
+#lingnan-review button,#lingnan-review input,#lingnan-review textarea { font:inherit; }
+#lingnan-review button { cursor:pointer; color:inherit; }
+#lingnan-review button:focus-visible,#lingnan-review input:focus-visible,#lingnan-review textarea:focus-visible { outline:3px solid #127ab1; outline-offset:4px; }
+#lingnan-review button:disabled { cursor:not-allowed; opacity:.58; }
+#lingnan-review .ln-top { min-height:70px; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 34px; background:var(--ln-paper); border-bottom:1px solid var(--ln-line); }
+#lingnan-review .ln-wordmark { font-family:"STSong","SimSun",serif; font-size:21px; letter-spacing:3px; font-weight:500; }
+#lingnan-review .ln-topnote { color:var(--ln-muted); font-size:12px; }
+#lingnan-review .ln-hero { position:relative; display:grid; grid-template-columns:1.1fr 1fr; min-height:246px; border-bottom:1px solid var(--ln-line); background:var(--ln-paper); isolation:isolate; }
+#lingnan-review .ln-intro { align-self:center; padding:32px 18px 36px 42px; z-index:1; }
+#lingnan-review .ln-eyebrow { font-size:12px; letter-spacing:3px; color:var(--ln-muted); margin:0 0 13px; }
+#lingnan-review h2 { margin:0 0 14px; font-family:"STSong","SimSun",serif; font-size:clamp(28px,4vw,42px); line-height:1.3; letter-spacing:3px; font-weight:500; }
+#lingnan-review .ln-subtitle { font-size:13px; color:var(--ln-muted); margin:0; }
+#lingnan-review .ln-art { position:relative; min-height:246px; overflow:hidden; opacity:var(--ln-decoration); }
+#lingnan-review .ln-art-label { position:absolute; right:16px; bottom:9px; padding:2px 6px; background:var(--ln-paper); font-size:11px; letter-spacing:2px; color:var(--ln-muted); z-index:3; }
+#lingnan-review .ln-content { position:relative; padding:25px 34px 30px; }
+#lingnan-review .ln-listhead { display:flex; align-items:center; justify-content:space-between; gap:15px; flex-wrap:wrap; margin-bottom:20px; }
+#lingnan-review .ln-listhead h3 { font-size:18px; font-weight:500; margin:0; font-family:"STSong","SimSun",serif; letter-spacing:2px; }
+#lingnan-review .ln-tools { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+#lingnan-review .ln-search { width:160px; min-height:42px; border:0; border-bottom:1px solid var(--ln-line); padding:8px 6px; background:var(--ln-paper); border-radius:0; color:var(--ln-ink); }
+#lingnan-review .ln-search::placeholder { color:var(--ln-muted); }
+#lingnan-review .ln-btn { display:inline-flex; justify-content:center; align-items:center; gap:8px; min-height:42px; padding:9px 20px; background:var(--ln-accent); color:var(--ln-on); border:1px solid var(--ln-accent); border-radius:3px; box-shadow:inset 0 0 0 3px var(--ln-accent),inset 0 0 0 4px #ffffff40; transition:filter .16s,transform .16s; }
+#lingnan-review .ln-btn:hover { filter:brightness(1.1); }
+#lingnan-review .ln-btn:active { transform:translateY(1px); }
+#lingnan-review .ln-btn.secondary { background:var(--ln-paper); color:var(--ln-ink); border-color:var(--ln-line); box-shadow:none; }
+#lingnan-review .ln-textbtn { background:transparent; border:0; min-height:42px; padding:7px 0; color:var(--ln-accent); }
+#lingnan-review .ln-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+#lingnan-review .ln-project { display:block; width:100%; text-align:left; padding:0; border:1px solid var(--ln-line); border-radius:3px; background:var(--ln-paper); overflow:hidden; transition:box-shadow .18s,transform .18s; }
+#lingnan-review .ln-project:hover { transform:translateY(-3px); box-shadow:0 7px 18px #182e2415; }
+#lingnan-review .ln-cover { position:relative; height:134px; overflow:hidden; background:var(--ln-soft); }
+#lingnan-review .ln-cover-label { position:absolute; right:8px; bottom:5px; font-size:11px; color:var(--ln-ink); background:var(--ln-paper); padding:0 5px; }
+#lingnan-review .ln-cardbody { display:block; padding:13px 15px 16px; }
+#lingnan-review .ln-cardtitle { display:block; font-size:16px; font-weight:500; letter-spacing:1px; margin-bottom:9px; }
+#lingnan-review .ln-meta { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px; color:var(--ln-muted); font-size:11px; }
+#lingnan-review .ln-tag { display:inline-block; padding:2px 7px; background:var(--ln-soft); color:var(--ln-ink); }
+#lingnan-review .ln-new { min-height:226px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px dashed var(--ln-line); background:transparent; gap:9px; color:var(--ln-muted); }
+#lingnan-review .ln-plus { font-size:28px; font-weight:400; }
+#lingnan-review .ln-bottom { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:0 34px 18px; color:var(--ln-muted); font-size:11px; letter-spacing:1px; }
+#lingnan-review .ln-swatches { display:flex; align-items:center; gap:6px; }
+#lingnan-review .ln-swatches i { width:11px; height:11px; display:block; border:1px solid #00000020; background:var(--swatch); }
+/* A: geometric coloured panes, a wooden frame and a quiet plaster wall. */
+#lingnan-review .a .ln-art { background:linear-gradient(125deg,#d8d7bb 0%,#e9debf 58%,#f7efd9 100%); }
+#lingnan-review .ln-window { position:absolute; width:244px; height:265px; top:-30px; right:45px; border:10px solid #405b4f; box-shadow:0 0 0 3px #a58b58,0 0 0 6px #446050,18px 23px 0 #3c62501a; background:#c8d6bc; display:grid; grid-template-columns:33px 1fr 33px; gap:6px; padding:6px; transform:rotate(-7deg); }
+#lingnan-review .ln-pane { background:repeating-linear-gradient(to bottom,#ba7d4c 0 37px,#476552 37px 43px,#719987 43px 80px,#476552 80px 86px,#c1a457 86px 122px,#476552 122px 128px); }
+#lingnan-review .ln-centerpane { position:relative; border:5px solid #476552; background:linear-gradient(140deg,#f4e7ad,#b7c9a8); display:flex; align-items:center; justify-content:center; }
+#lingnan-review .ln-centerpane:before { content:""; width:94px; height:94px; border:5px double #5b7961; border-radius:50%; background:linear-gradient(150deg,#c5d7bc,#78a093); }
+#lingnan-review .ln-centerpane:after { content:""; position:absolute; inset:18px; border:1px solid #6e8562; }
+#lingnan-review .ln-light { position:absolute; width:290px; height:160px; background:linear-gradient(90deg,#c2875b33 30%,#57887833 30% 66%,#d1b56244 66%); transform:rotate(-30deg) skewX(25deg); left:-90px; bottom:-55px; filter:blur(2px); }
+#lingnan-review .a .ln-cover { background:linear-gradient(30deg,#cccbb1,#e4dcc1); }
+#lingnan-review .ln-mini-window { position:absolute; width:96px; height:104px; left:calc(50% - 48px); top:16px; border:7px double #4a6d5c; background:repeating-linear-gradient(90deg,#718f77 0 19px,#c29b5e 19px 23px,#d9c285 23px 48px); box-shadow:10px 10px 0 #41614c14; }
+#lingnan-review .ln-mini-window:after { content:""; position:absolute; inset:21px 11px; border:4px double #42654e; background:#e5dcac; border-radius:50%; }
+#lingnan-review .a .ln-cover .ln-plate { width:112px; height:112px; top:12px; left:calc(50% - 56px); border-width:6px; }
+/* B: an arcade, a porcelain plate and a stitched floral medallion. */
+#lingnan-review .b .ln-hero { background:#f7eddc; }
+#lingnan-review .b .ln-art { background:linear-gradient(110deg,#f7eddc,#ead3b4); }
+#lingnan-review .ln-arcade { position:absolute; display:flex; inset:0 -8px 0 5px; gap:12px; align-items:flex-end; }
+#lingnan-review .ln-arch { display:block; width:30%; height:220px; border:13px double #d6b793; border-bottom:0; border-radius:90px 90px 0 0; background:linear-gradient(110deg,#d0ab83,#efe0c5); box-shadow:8px 0 0 #b08a6920; }
+#lingnan-review .ln-plate { position:absolute; width:180px; height:180px; border-radius:50%; left:calc(50% - 90px); top:41px; border:9px double #aa7733; background:radial-gradient(circle,#fff6df 0 48%,#c1747f 49% 52%,#fff0ce 53% 60%,#63907e 61% 64%,#ecd5a2 65%); box-shadow:13px 18px 20px #6e3f2525; transform:rotate(-12deg); }
+#lingnan-review .ln-flower { position:absolute; width:72px; height:72px; left:calc(50% - 36px); top:calc(50% - 36px); }
+#lingnan-review .ln-petal { position:absolute; left:24px; top:1px; width:25px; height:39px; background:#a94c60; border-radius:50%; transform-origin:50% 35px; transform:rotate(var(--angle)); border:1px solid #e0b17d; }
+#lingnan-review .ln-flower:after { content:""; position:absolute; width:18px; height:18px; border:4px dotted #f0d291; background:#9b703e; border-radius:50%; top:27px; left:28px; }
+#lingnan-review .ln-leaf { position:absolute; width:23px; height:58px; border-radius:100% 0 100% 0; background:repeating-linear-gradient(30deg,#507f66 0 2px,#6d9274 2px 3px); transform:rotate(var(--angle)); }
+#lingnan-review .b .ln-btn { border-radius:20px 20px 5px 5px; box-shadow:inset 0 0 0 3px #8a3947,inset 0 0 0 4px #c9a367; }
+#lingnan-review .b .ln-btn.secondary { box-shadow:inset 0 0 0 3px #fff9ed,inset 0 0 0 4px #dbc8a5; }
+#lingnan-review .b .ln-project { border-radius:50px 50px 5px 5px; }
+#lingnan-review .b .ln-cover { height:134px; background:repeating-linear-gradient(0deg,#e9d5b9 0 1px,#eddfc8 1px 5px); }
+#lingnan-review .b .ln-cover .ln-plate { width:111px; height:111px; top:12px; left:calc(50% - 56px); border-width:6px; }
+#lingnan-review .ln-stitch { position:absolute; width:130px; height:110px; border:4px double #d9b47f; background:repeating-linear-gradient(0deg,#71313e 0 1px,#7c3a48 1px 3px); border-radius:54px 54px 3px 3px; top:13px; left:calc(50% - 65px); }
+#lingnan-review .ln-stitch .ln-flower { transform:scale(.8); }
+/* C: water, green brick courtyard walls and a palmetto fan. */
+#lingnan-review .c .ln-hero { background:#1e3935; color:#f0e8c7; border-color:#536456; }
+#lingnan-review .c .ln-eyebrow,#lingnan-review .c .ln-subtitle,#lingnan-review .c .ln-art-label { color:#c6c9a9; }
+#lingnan-review .c .ln-art-label { background:#1e3935; }
+#lingnan-review .c .ln-art { background:radial-gradient(ellipse at 56% 80%,#54735b,#1e3935 74%); }
+#lingnan-review .ln-wall { position:absolute; width:226px; height:106px; left:calc(50% - 113px); bottom:14px; background:repeating-linear-gradient(0deg,#536b5f 0 15px,#718371 15px 16px); border:5px solid #8c9a81; border-top:0; border-bottom:0; }
+#lingnan-review .ln-wall:before,#lingnan-review .ln-wall:after { content:""; position:absolute; width:226px; height:80px; top:-75px; left:-5px; background:#8c9a81; clip-path:path('M0 80 C23 80 28 63 28 44 L28 22 C28 -2 60 -2 60 22 L60 47 Q60 58 80 50 L113 31 L146 50 Q166 58 166 47 L166 22 C166 -2 198 -2 198 22 L198 44 C198 63 203 80 226 80 Z'); }
+#lingnan-review .ln-wall:after { background:#536b5f; transform:scale(.94,.89); transform-origin:center bottom; }
+#lingnan-review .ln-door { position:absolute; width:58px; height:86px; bottom:0; left:calc(50% - 29px); background:#203c33; border:5px solid #a1a789; border-bottom:0; }
+#lingnan-review .ln-fan { position:absolute; width:138px; height:155px; border-radius:52% 48% 46% 46%; background:repeating-conic-gradient(from -82deg at 50% 100%,#c8b578 0deg 3deg,#e2d49b 3deg 5deg); border:3px solid #aa8955; box-shadow:8px 7px 10px #152a3330; transform:rotate(23deg); right:25px; top:30px; }
+#lingnan-review .ln-fan:after { content:""; position:absolute; height:75px; width:7px; border-radius:4px; background:#a0814c; bottom:-61px; left:calc(50% - 3px); }
+#lingnan-review .ln-water { position:absolute; height:28px; bottom:0; left:0; right:0; background:repeating-linear-gradient(0deg,#66887155 0 1px,transparent 1px 8px); transform:skewX(-30deg); }
+#lingnan-review .c .ln-content { background:#eee9d7; }
+#lingnan-review .c .ln-bottom { background:#eee9d7; }
+#lingnan-review .c .ln-btn { border-radius:6px; background:repeating-linear-gradient(90deg,#36583f 0 2px,#3b6045 2px 4px); box-shadow:inset 0 0 0 3px #36583f,inset 0 0 0 4px #ad9b69; }
+#lingnan-review .c .ln-btn.secondary { background:var(--ln-paper); box-shadow:none; }
+#lingnan-review .c .ln-cover { background:#425d4f; }
+#lingnan-review .c .ln-cover .ln-wall { transform:scale(.63); transform-origin:center bottom; bottom:6px; }
+#lingnan-review .c .ln-cover .ln-fan { width:75px; height:83px; right:calc(50% - 40px); top:12px; transform:rotate(-16deg); }
+#lingnan-review .c .ln-cover .ln-fan:after { height:36px; bottom:-29px; width:5px; }
+/* The same theme carries through to a quiet, single-column writing room. */
+#lingnan-review .ln-editor { padding:25px 34px 30px; background:var(--ln-bg); }
+#lingnan-review .ln-projectbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:15px; }
+#lingnan-review .c .ln-projectbar { color:#eee7d4; }
+#lingnan-review .c .ln-projectbar .ln-textbtn { color:#eee7d4; }
+#lingnan-review .ln-save { font-size:12px; }
+#lingnan-review .ln-steps { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); border:1px solid var(--ln-line); background:var(--ln-paper); margin:0 0 22px; padding:5px; gap:4px; }
+#lingnan-review .ln-step { background:transparent; border:0; min-height:43px; padding:8px 3px; color:var(--ln-muted); font-size:13px; }
+#lingnan-review .ln-step[aria-current="step"] { background:var(--ln-accent); color:var(--ln-on); }
+#lingnan-review .ln-sheet { position:relative; background:var(--ln-paper); padding:26px 30px; border:1px solid var(--ln-line); border-top:4px double var(--ln-gold); }
+#lingnan-review .ln-sheet h3 { font:500 24px "STSong","SimSun",serif; margin:0 0 8px; letter-spacing:2px; }
+#lingnan-review .ln-sheet p { color:var(--ln-muted); font-size:12px; margin:0 0 18px; }
+#lingnan-review .ln-draft { display:block; resize:vertical; width:100%; min-height:235px; border:0; border-bottom:1px solid var(--ln-line); color:var(--ln-ink); background:var(--ln-paper); font-size:16px; line-height:1.9; padding:8px 0; }
+#lingnan-review .ln-request { display:block; width:100%; margin:20px 0 14px; min-height:45px; border:1px solid var(--ln-line); background:var(--ln-paper); color:var(--ln-ink); padding:10px 12px; font-size:16px; }
+#lingnan-review .ln-actions { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+#lingnan-review .ln-actions>div { display:flex; gap:8px; flex-wrap:wrap; }
+#lingnan-review .ln-notice { margin-top:14px; color:var(--ln-muted); font-size:12px; }
+#lingnan-review .ln-noresults { grid-column:1/-1; margin:20px 0; color:var(--ln-muted); }
+#lingnan-review [hidden] { display:none !important; }
+@media(max-width:650px) {
+ #lingnan-review .ln-top { padding:14px 20px; }
+ #lingnan-review .ln-intro { padding:25px 10px 25px 22px; }
+ #lingnan-review .ln-hero { grid-template-columns:1.15fr 1fr; min-height:225px; }
+ #lingnan-review .ln-art { min-height:225px; }
+ #lingnan-review .ln-window { right:-65px; }
+ #lingnan-review .ln-plate { left:calc(50% - 75px); width:150px; height:150px; }
+ #lingnan-review .ln-art-label { right:10px; letter-spacing:1px; font-size:11px; }
+ #lingnan-review .ln-fan { right:-24px; transform:rotate(12deg) scale(.85); }
+ #lingnan-review .ln-wall { left:calc(50% - 110px); transform:scale(.75); transform-origin:bottom; }
+ #lingnan-review .ln-content,#lingnan-review .ln-editor { padding:22px 18px; }
+ #lingnan-review .ln-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+ #lingnan-review .ln-new { grid-column:1/-1; min-height:55px; flex-direction:row; }
+ #lingnan-review .ln-bottom { padding:0 18px 18px; }
+ #lingnan-review .ln-sheet { padding:20px 16px; }
+ #lingnan-review .ln-steps { gap:1px; }
+ #lingnan-review .ln-step { font-size:12px; overflow-wrap:anywhere; }
+}
+@media(max-width:390px) {
+ #lingnan-review .ln-wordmark { font-size:18px; letter-spacing:2px; }
+ #lingnan-review .ln-topnote { font-size:11px; }
+ #lingnan-review .ln-hero { grid-template-columns:1fr; }
+ #lingnan-review .ln-art { min-height:185px; }
+ #lingnan-review .ln-intro { padding:25px 22px; }
+ #lingnan-review .ln-window { right:55px; }
+ #lingnan-review .ln-plate { top:15px; }
+ #lingnan-review .ln-fan { right:40px; top:5px; }
+ #lingnan-review .ln-cardbody { padding:11px; }
+ #lingnan-review .ln-cardtitle { font-size:14px; }
+ #lingnan-review .ln-meta { display:grid; }
+ #lingnan-review .ln-tools { width:100%; }
+ #lingnan-review .ln-search { flex:1; width:110px; }
+ #lingnan-review .ln-btn { padding:9px 13px; }
+}
+@media(prefers-reduced-motion:reduce) { #lingnan-review * { transition:none !important; } }
+@media(pointer:coarse) { #lingnan-review button,#lingnan-review input { min-height:44px; } }
+</style>
+<div id="lingnan-review" aria-label="岭南工作台三种美术方案预览">
+ <section class="ln-option" aria-labelledby="ln-title-a">
+  <div class="ln-caption"><strong id="ln-title-a">A　西关 · 映彩</strong><span>青砖灰墙 / 满洲窗 / 彩色玻璃光影</span></div>
+  <div class="ln-app a" data-theme="a" aria-label="西关映彩工作台预览"></div>
+ </section>
+ <section class="ln-option" aria-labelledby="ln-title-b">
+  <div class="ln-caption"><strong id="ln-title-b">B　花埠 · 织金</strong><span>骑楼拱廊 / 广彩瓷 / 广绣线迹</span></div>
+  <div class="ln-app b" data-theme="b" aria-label="花埠织金工作台预览"></div>
+ </section>
+ <section class="ln-option" aria-labelledby="ln-title-c">
+  <div class="ln-caption"><strong id="ln-title-c">C　水巷 · 葵影</strong><span>镬耳山墙 / 水巷院落 / 新会葵艺</span></div>
+  <div class="ln-app c" data-theme="c" aria-label="水巷葵影工作台预览"></div>
+ </section>
+</div>
+<script>
+(() => {
+ const root = document.getElementById('lingnan-review');
+ const flower = '<span class="ln-flower"><i class="ln-petal" style="--angle:0deg"></i><i class="ln-petal" style="--angle:72deg"></i><i class="ln-petal" style="--angle:144deg"></i><i class="ln-petal" style="--angle:216deg"></i><i class="ln-petal" style="--angle:288deg"></i></span>';
+ const wall = '<span class="ln-wall"><i class="ln-door"></i></span>';
+ const plate = '<span class="ln-plate"><i class="ln-leaf" style="--angle:30deg;left:27px;top:24px"></i><i class="ln-leaf" style="--angle:80deg;right:22px;bottom:15px"></i>'+flower+'</span>';
+ const designs = {
+  a:{headline:'推窗见岭南，<br>落笔有新意。',subtitle:'把一念灵感，写进岭南的日常。',art:'<span class="ln-light"></span><span class="ln-window"><i class="ln-pane"></i><i class="ln-centerpane"></i><i class="ln-pane"></i></span>',detail:'满洲窗 · 光与木的交织',covers:['<span class="ln-mini-window"></span>',plate],colors:['#eeeae0','#245c4f','#aa7338','#ba7d4c','#719987']},
+  b:{headline:'穿过花埠，<br>拾起一段锦绣。',subtitle:'让故事与手艺，在这里相遇。',art:'<span class="ln-arcade"><i class="ln-arch"></i><i class="ln-arch"></i><i class="ln-arch"></i></span>'+plate,detail:'广彩与广绣 · 色与线的相逢',covers:[plate,'<span class="ln-stitch">'+flower+'</span>'],colors:['#fff9ed','#8a3947','#a67532','#63907e','#c1747f']},
+  c:{headline:'水巷留清风，<br>葵影生灵感。',subtitle:'在岭南的慢时光里，开始一件新作品。',art:wall+'<span class="ln-fan"></span><span class="ln-water"></span>',detail:'新会葵艺 · 一扇清风',covers:[wall,'<span class="ln-fan"></span>'],colors:['#1e3935','#f1ecd9','#355d43','#a78545','#c8b578']}
+ };
+ const steps = ['创意','内容','美术提示词','概念图','成品'];
+ const projects = [{name:'西关雨后',type:'小说',stage:1},{name:'一扇清风',type:'文创作品',stage:3}];
+ const initialDraft='一句话概念\n以当代西关街区为背景，讲述雨后街巷中人与人的一次相遇。\n\n创作方向\n从日常生活的细节展开，保留骑楼下的步行体验、窗内外的光线与街坊之间的联系。具体人物与情节仍待补充。';
+ root.querySelectorAll('.ln-app').forEach(app => {
+  const d=designs[app.dataset.theme];
+  let stage=1, projectName='西关雨后', draft=initialDraft;
+  app.innerHTML=`<header class="ln-top"><span class="ln-wordmark">创意工作台</span><span class="ln-topnote">岭南文化创作 · 视觉预览</span></header>
+   <div class="ln-home"><div class="ln-hero"><div class="ln-intro"><p class="ln-eyebrow">岭南 / 创意之间</p><h2>${d.headline}</h2><p class="ln-subtitle">${d.subtitle}</p></div><div class="ln-art" aria-hidden="true">${d.art}<span class="ln-art-label">${d.detail}</span></div></div>
+   <div class="ln-content"><div class="ln-listhead"><h3>我的创意</h3><div class="ln-tools"><input class="ln-search" type="search" placeholder="搜索项目名称" aria-label="搜索示例项目"><button type="button" class="ln-btn" data-new>＋ 新建创意</button></div></div>
+   <div class="ln-grid">${projects.map((p,i)=>`<button type="button" class="ln-project" data-project="${i}" aria-label="预览${p.name}项目"><span class="ln-cover" style="display:block" aria-hidden="true">${d.covers[i]}<span class="ln-cover-label">概念占位图</span></span><span class="ln-cardbody"><span class="ln-cardtitle">${p.name}</span><span class="ln-meta"><span>${p.type} · 今天编辑</span><span class="ln-tag">${steps[p.stage]}</span></span></span></button>`).join('')}<button type="button" class="ln-project ln-new" data-new><span class="ln-plus">＋</span><span>从一句想法开始</span></button><p class="ln-noresults" hidden>没有匹配的示例项目</p></div></div>
+   <footer class="ln-bottom"><span>预览示例 · 项目卡可进入编辑页</span><span class="ln-swatches" aria-label="方案配色">${d.colors.map(color=>`<i style="--swatch:${color}"></i>`).join('')}</span></footer></div>
+   <div class="ln-editor" hidden><div class="ln-projectbar"><button type="button" class="ln-textbtn" data-back>← 返回项目列表</button><span data-name>西关雨后</span><span class="ln-save">预览草稿 · 未持久化</span></div><nav class="ln-steps" aria-label="创作阶段">${steps.map((s,i)=>`<button type="button" class="ln-step" data-step="${i}">${String(i+1).padStart(2,'0')} ${s}</button>`).join('')}</nav>
+   <div class="ln-sheet"><h3 data-stage-title>内容</h3><p data-stage-hint>示例内容，可输入文字体验排版。</p><div data-writing><textarea class="ln-draft" aria-label="预览内容编辑区"></textarea></div><div data-concepts hidden><div class="ln-grid"><div class="ln-project"><div class="ln-cover" aria-hidden="true">${d.covers[1]}</div><div class="ln-cardbody"><span class="ln-cardtitle">葵扇 · 物件</span><span class="ln-meta">概念占位图</span></div></div></div></div><div data-final hidden><p>成品服务尚未接入。</p><button type="button" class="ln-btn" disabled>生成完整作品 · 未接入</button></div><input class="ln-request" aria-label="修改要求预览" placeholder="用一句话描述你想如何修改……"><div class="ln-actions"><div data-primary-actions><button type="button" class="ln-btn secondary" data-demo>按要求修改</button></div><button type="button" class="ln-btn" data-next>继续 →</button></div><div class="ln-notice" role="status" aria-live="polite">仅体验布局与交互，不调用生成服务或保存项目。</div></div></div>`;
+  const home=app.querySelector('.ln-home'), editor=app.querySelector('.ln-editor'), writing=app.querySelector('.ln-draft');
+  writing.value=draft;
+  function renderStage(){
+   app.querySelector('[data-stage-title]').textContent=steps[stage];
+   app.querySelector('[data-stage-hint]').textContent=stage<3?'示例内容，可输入文字体验排版。':stage===3?'角色、地图、物件；这里只展示物件占位示例。':'当前视觉预览不提供实际作品生成。';
+   app.querySelectorAll('[data-step]').forEach(btn=>{if(Number(btn.dataset.step)===stage)btn.setAttribute('aria-current','step');else btn.removeAttribute('aria-current');});
+   app.querySelector('[data-writing]').hidden=stage>=3;
+   app.querySelector('[data-concepts]').hidden=stage!==3;
+   app.querySelector('[data-final]').hidden=stage!==4;
+   app.querySelector('.ln-request').hidden=stage===4;
+   app.querySelector('[data-next]').hidden=stage===4;
+   app.querySelector('[data-primary-actions]').hidden=stage===4;
+   app.querySelector('[data-primary-actions]').innerHTML=stage===3?'<button type="button" class="ln-btn secondary" data-demo>保存</button><button type="button" class="ln-btn secondary" data-demo>返工</button><button type="button" class="ln-textbtn" data-demo>删除</button>':'<button type="button" class="ln-btn secondary" data-demo>按要求修改</button>';
+  }
+  function openProject(name,start){projectName=name;stage=start;app.querySelector('[data-name]').textContent=projectName;home.hidden=true;editor.hidden=false;renderStage();}
+  app.addEventListener('click',event=>{
+   const button=event.target.closest('button'); if(!button)return;
+   if(button.hasAttribute('data-project')){const p=projects[Number(button.dataset.project)];openProject(p.name,p.stage);}
+   if(button.hasAttribute('data-new')){writing.value='';openProject('新创意 · 预览',0);}
+   if(button.hasAttribute('data-back')){home.hidden=false;editor.hidden=true;}
+   if(button.hasAttribute('data-step')){stage=Number(button.dataset.step);renderStage();}
+   if(button.hasAttribute('data-next')){stage=Math.min(stage+1,4);renderStage();}
+   if(button.hasAttribute('data-demo'))app.querySelector('.ln-notice').textContent='这是「'+button.textContent+'」的按钮样式预览；未执行生成、保存或删除。';
+  });
+  writing.addEventListener('input',()=>{draft=writing.value;app.querySelector('.ln-save').textContent='预览草稿已修改 · 未持久化';});
+  app.querySelector('.ln-search').addEventListener('input',event=>{
+   const query=event.target.value.trim(); let count=0;
+   app.querySelectorAll('[data-project]').forEach(card=>{card.hidden=!projects[Number(card.dataset.project)].name.includes(query);if(!card.hidden)count++;});
+   app.querySelector('.ln-noresults').hidden=count>0;
+  });
+ });
+ const settings={decoration:100};
+ function applyDecoration(){root.style.setProperty('--ln-decoration',String(settings.decoration/100));}
+ applyDecoration();
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:applyDecoration});tweak.addSlider(settings,'decoration',{label:'首页建筑与工艺装饰强度',min:30,max:100,step:5,unit:'%'});}
+})();
+</script>
