@@ -659,6 +659,8 @@ npm ci
 npm run dev
 ```
 
+在右上角「设置 → API 配置」中可保存、更换或清除 DeepSeek、外部图像、Runway 与 WorkBuddy 密钥，并设置图像／视频 API 地址及图像模型。保存后对后续生成立即生效；已保存密钥不回显。配置保存在本机 `work/service-settings.json`（仅当前用户可读写），优先于环境文件，不进入项目 JSON 备份；配置状态不代表真实调用验证。此入口仅限本机访问。
+
 Web：<http://localhost:3001>。本地 Runtime：<http://127.0.0.1:8791>。当前首页提供项目入口、B＋C 融合主题及独立的四类型演示。
 
 ```powershell

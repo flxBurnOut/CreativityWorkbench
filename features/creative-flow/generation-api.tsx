@@ -7,6 +7,7 @@ import { api, imageUrl } from '@/features/projects/server-store';
 import { taskSource } from '@/lib/workbench/task-contract.mjs';
 import { applyTaskResult, type GenerationTask } from './task-results';
 import type { EditProject, Notice } from './stages';
+import { ServiceSettings } from './service-settings';
 import { OutputTaskPreview } from './delivery-stages';
 
 export type GenerationControls = {
@@ -103,5 +104,5 @@ export function GenerationServiceStatus(){
   const[error,setError]=useState('');
   async function refresh(){try{setData(await api<ServiceStatus>('status'));setError('');}catch(e){setError(String(e));}}
   useEffect(()=>{void refresh();},[]);
-  return <div className="settings-section"><h3>多媒体生成服务</h3>{error&&<p role="alert">{error}</p>}{data&&<><p>文字与网站：{data.text.model} · {data.text.configured?'已配置':'待配置服务端密钥'}</p><p>WorkBuddy 媒体交接：{data.images.workbuddyConfigured?'已配置自动发送授权':'可手动交接，自动发送待授权'}</p><p>外部图像 API：{data.images.model} · {data.images.externalConfigured?'已配置':'待配置'}</p><p>外部视频 API：{data.video?.model} · {data.video?.externalConfigured?'已配置':'待配置'}</p><p className="settings-note">配置状态不等于真实调用成功。地址与密钥在服务端配置。WorkBuddy 的视频与配音能力取决于该应用实际可用服务；视频在本机合成。3D 文创最后实施。</p></>}<Button variant="secondary" onClick={()=>void refresh()}>刷新服务状态</Button></div>;
+  return <><ServiceSettings onSaved={()=>void refresh()}/><div className="settings-section"><h3>多媒体生成服务</h3>{error&&<p role="alert">{error}</p>}{data&&<><p>文字与网站：{data.text.model} · {data.text.configured?'已配置':'待配置服务端密钥'}</p><p>WorkBuddy 媒体交接：{data.images.workbuddyConfigured?'已配置自动发送授权':'可手动交接，自动发送待授权'}</p><p>外部图像 API：{data.images.model} · {data.images.externalConfigured?'已配置':'待配置'}</p><p>外部视频 API：{data.video?.model} · {data.video?.externalConfigured?'已配置':'待配置'}</p><p className="settings-note">配置状态不等于真实调用成功。可在上方 API 配置中保存地址与密钥。WorkBuddy 的视频与配音能力取决于该应用实际可用服务；视频在本机合成。3D 文创最后实施。</p></>}<Button variant="secondary" onClick={()=>void refresh()}>刷新服务状态</Button></div></>;
 }
