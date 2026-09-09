@@ -64,7 +64,7 @@ test('a rejected WorkBuddy dispatch can finish through explicit manual handoff',
   let task;
   for(let i=0;i<100;i++){task=await manager.get(input.id);if(task.dispatch==='manual')break;await new Promise(r=>setTimeout(r,10));}
   assert.equal(task.status,'waiting_external');assert.equal(task.dispatch,'manual');assert.match(task.error,/手动交接/);
-  await writeFile(task.handoff.output,await png());const done=await manager.get(input.id);assert.equal(done.status,'succeeded');assert.equal(done.error,undefined);
+  await writeFile(task.handoff.output,await png());const done=await until(manager,input.id);assert.equal(done.status,'succeeded');assert.equal(done.error,undefined);
 });
 
 test('short story generation respects delivery notes and exports editable content',async()=>{
@@ -135,14 +135,14 @@ test('WorkBuddy sends the documented message, imports assigned output, and resum
   for(let i=0;i<100;i++){task=await manager.get(input.id);if(task.dispatch==='sent')break;await new Promise(r=>setTimeout(r,10));}
   assert.equal(task.dispatch,'sent');assert.equal(calls,1);
   const reopened=createTaskManager(createRepository(directory));await writeFile(task.handoff.output,await png());
-  const done=await reopened.get(input.id);assert.equal(done.status,'succeeded');assert.ok(done.result.asset.fileId);
+  const done=await until(reopened,input.id);assert.equal(done.status,'succeeded');assert.ok(done.result.asset.fileId);
 });
 
 test('manual WorkBuddy handoff retains late pictures after cancellation without adopting them',async()=>{
   const{repo}=await setup();const p=project();await repo.saveWorkspace(workspace(p),0,randomUUID());const manager=createTaskManager(repo,{env:{}});
   const input=request(p,'cover',{provider:'workbuddy',ratio:'1:1'});await manager.submit(input);let task=await until(manager,input.id,'waiting_external');
   for(let i=0;i<100&&task.dispatch!=='manual';i++){await new Promise(r=>setTimeout(r,10));task=await manager.get(input.id);}
-  assert.equal(task.dispatch,'manual');assert.equal(task.result,undefined);await manager.cancel(input.id);await writeFile(task.handoff.output,await png());assert.equal((await manager.get(input.id)).status,'succeeded');assert.equal((await manager.get(input.id)).recoveredAfterCancel,true);
+  assert.equal(task.dispatch,'manual');assert.equal(task.result,undefined);await manager.cancel(input.id);await writeFile(task.handoff.output,await png());assert.equal((await until(manager,input.id)).status,'succeeded');assert.equal((await manager.get(input.id)).recoveredAfterCancel,true);
   await manager.dismiss(input.id);assert.equal((await manager.get(input.id)).dismissed,true);
 });
 

@@ -13,6 +13,7 @@ import { FLOW_LABELS, taskStage, taskMatchesStep } from './flow-guide';
 
 export type GenerationControls = {
   run:(kind:string,args?:Record<string,unknown>)=>void; busy:boolean; contentBusy?:boolean; provider:string; ratio:string;
+  fitFrame?:(objectId:string,fit:'pad'|'crop')=>Promise<void>;
   setProvider:(value:string)=>void; setRatio:(value:string)=>void;
 };
 const names:Record<string,string> = {creative:'创意方案',content:'内容方案',art:'美术提示词',objects:'对象清单',novel:'短篇正文',image:'概念图',cover:'项目封面','video-frame':'镜头首帧候选','design-package':'设计资料包','video-plan':'视频分镜','video-shot':'视频镜头','video-audio':'旁白配音','video-compose':'完整视频',website:'网站生成任务包','website-build':'旧模板网站更新'};
@@ -23,6 +24,7 @@ type ServiceStatus={text:{configured:boolean;model:string};images:{provider:stri
 export function useGeneration(project:Project|null,demo:boolean,edit:EditProject,notice:Notice,flush:()=>Promise<void>) {
   const [tasks,setTasks] = useState<GenerationTask[]>([]);
   const [serviceStatus,setServiceStatus] = useState<ServiceStatus|null>(null); const [error,setError] = useState('');
+  const [pollError,setPollError] = useState('');
   const [submitting,setSubmitting] = useState(false); const [provider,setProvider] = useState('workbuddy'); const [ratio,setRatio] = useState('1:1');
   const [showHistory,setShowHistory] = useState(false);
   useEffect(() => setShowHistory(false), [project?.stage,project?.type]);
@@ -36,19 +38,41 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
   const [chosen,setChosen]=useState<Record<string,{objectIds?:string[];sectionKeys?:string[]}>>({});
   const current = useRef(project); current.current = project;
   const busy = useRef(false); const uncertain = useRef<Record<string,unknown>|null>(null);
+  const polling = useRef<Promise<void>|null>(null);
   const refresh = useCallback(async () => {
-    const id = current.current?.id; if (!id || id.startsWith('demo-')) return;
-    try { const data = await api<{tasks:GenerationTask[]}>('tasks?projectId='+encodeURIComponent(id)); if (current.current?.id === id) setTasks(data.tasks); }
-    catch (e) { if (current.current?.id === id) setError(e instanceof Error ? e.message : '任务状态读取失败。'); }
+    if (polling.current) return polling.current;
+    const id = current.current?.id; if (!id || id.startsWith('demo-') || document.visibilityState === 'hidden') return;
+    const operation = (async () => {
+      try {
+        const data = await api<{tasks:GenerationTask[]}>('tasks?projectId='+encodeURIComponent(id));
+        if (current.current?.id === id) { setTasks(previous=>JSON.stringify(previous)===JSON.stringify(data.tasks)?previous:data.tasks); setPollError(''); }
+      } catch (e) { if (current.current?.id === id) setPollError(e instanceof Error ? e.message : '任务状态读取失败。'); }
+    })();
+    polling.current = operation;
+    try { await operation; } finally { if (polling.current === operation) polling.current = null; }
   },[]);
   useEffect(() => {
-    setTasks([]);setError('');setShowHistory(false); uncertain.current = null;
+    setTasks([]);setError('');setPollError('');setShowHistory(false); uncertain.current = null;
     if (!project || demo) return;
     let live = true; let timeout:ReturnType<typeof setTimeout>;
     const poll = async () => { await refresh(); if (live) timeout = setTimeout(poll,2500); };
     void poll(); return () => { live=false;clearTimeout(timeout); };
   },[project?.id,demo,refresh]);
   useEffect(() => { const refreshProvider=()=>{void api<ServiceStatus>('status').then(data => {setProvider(data.images.provider);setServiceStatus(data);}).catch(() => {});}; refreshProvider(); window.addEventListener('workbench-settings-saved',refreshProvider); return ()=>window.removeEventListener('workbench-settings-saved',refreshProvider); },[]);
+  async function fitFrame(objectId:string,fit:'pad'|'crop') {
+    const id=current.current?.id;if(!id||busy.current||demo)return;
+    busy.current=true;setSubmitting(true);setError('');
+    try {
+      await flush();const before=current.current;if(!before||before.id!==id)return;
+      const stamp=JSON.stringify(before);
+      const saved=await api<{projectVersion:string}>('core/project_get','POST',{projectId:id});
+      await api('core/video_frame_fit','POST',{projectId:id,expectedVersion:saved.projectVersion,requestId:crypto.randomUUID(),objectId,fit});
+      const after=await api<{project:Project}>('core/project_get','POST',{projectId:id});
+      if(current.current?.id===id&&JSON.stringify(current.current)===stamp)edit(p=>({...after.project,stage:p.stage}));
+      notice('已生成独立首帧并保留原图；请预览边缘与主体，再核对视频提示词。');
+    }catch(e){setError(e instanceof Error?e.message:'首帧调整失败。');}
+    finally{busy.current=false;setSubmitting(false);}
+  }
   async function run(kind:string,args:Record<string,unknown>={},retryOf?:string) {
     if (!current.current || busy.current) return;
     if (demo) { notice('演示项目不调用生成服务，请新建真实项目。'); return; }
@@ -90,12 +114,13 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
   const visible=tasks.filter(t=>(showHistory || matchesStep(t))&&(showHistory||!t.dismissed)).slice(0,showHistory?100:50);
   const elsewhere=tasks.filter(t=>(!t.workType||t.workType===project?.type)&&!t.dismissed&&!matchesStep(t)&&!['failed','cancelled'].includes(t.status));
   const panel=!demo&&project&&<section className="generation-tasks" aria-label="生成任务与结果">
+    {pollError&&<div className="creative-feedback creative-error" role="alert">{pollError}<Button variant="ghost" onClick={()=>void refresh()}>刷新状态</Button></div>}
     {(contentMode || visible.length>0) && <div className="section-heading"><div><h3>{showHistory?'项目历史结果':'本步生成结果'}</h3><p>预览后采用，当前稿才会更新；未采用的版本会保留。</p></div></div>}
     {error&&<div className="creative-feedback creative-error" role="alert">{error}<Button variant="secondary" onClick={()=>window.dispatchEvent(new Event('workbench-open-settings'))}>查看生成服务设置</Button><Button variant="ghost" onClick={()=>{setError('');void refresh();}}>刷新状态</Button>{uncertain.current&&<Button onClick={async()=>{try{await api('tasks','POST',uncertain.current);uncertain.current=null;setError('');await refresh();}catch(e){setError(String(e));}}}>核对上次提交</Button>}</div>}
     {visible.map(task=>{
       const stale=taskSource(project,task.kind,task.args)!==task.source;const r=task.result;
       const preview=r?.brief||r?.notes||r?.replacement||(r?.sections&&Object.entries(r.sections).map(([k,v])=>(sectionNames[k]||k)+'\n'+v).join('\n\n'))||r?.art?.fullPrompt||(r?.objects&&r.objects.map(o=>o.name+'：'+o.description).join('\n\n'))||r?.novel?.text||'';
-      return <article className="surface task-card" id={'generation-task-'+task.id} key={task.id}><div className="section-heading"><div><h3>{names[task.kind]}{task.targetName ? ` · ${task.targetName}` : ""} · {task.kind==='website'&&task.status==='succeeded'?'任务包已准备':statuses[task.status]}</h3><p>{new Date(task.createdAt).toLocaleString('zh-CN')}{task.dismissed?' · 已收起／采用':''}</p></div>{!['succeeded','failed','cancelled'].includes(task.status)&&<Button variant="ghost" onClick={async()=>{try{await api('tasks/'+task.id+'/cancel','POST',{});await refresh();}catch(e){setError(String(e));}}}>取消等待</Button>}</div>
+      return <article className="surface task-card" id={'generation-task-'+task.id} key={task.id}><div className="section-heading"><div><h3>{names[task.kind]}{task.targetName ? ` · ${task.targetName}` : ""} · {task.kind==='website'&&task.status==='succeeded'?'任务包已准备':r?.videoClip?.validation?.status==='failed'?'文件已收到 · 规格未通过':statuses[task.status]}</h3><p>{new Date(task.createdAt).toLocaleString('zh-CN')}{task.dismissed?' · 已收起／采用':''}</p></div>{!['succeeded','failed','cancelled'].includes(task.status)&&<Button variant="ghost" onClick={async()=>{try{await api('tasks/'+task.id+'/cancel','POST',{});await refresh();}catch(e){setError(String(e));}}}>取消等待</Button>}</div>
         {['queued','running'].includes(task.status)&&<p role="status">可以继续编辑或离开页面，任务记录会保留。返回结果不会自动覆盖当前内容。</p>}
         {task.status==='waiting_external'&&<p role="status">{task.dispatch==='manual'?'请复制请求到同一台电脑的 WorkBuddy，由它生成并保存结果。':task.dispatch==='pending'?'正在向 WorkBuddy 发送请求。':task.dispatch==='conversation'?'请在发起任务的 WorkBuddy 对话中完成媒体生成并写回文件。':'已向 WorkBuddy 发送请求，等待它生成媒体文件并保存回任务目录。'}若 WorkBuddy 提出授权问题，请在该应用处理。</p>}
         {task.status==='waiting_provider'&&<p role="status">任务编号已保存，刷新只查询进度。媒体下载和处理期间可继续编辑。</p>}
@@ -112,7 +137,7 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
         {r?.art&&<p className="muted">参考图片用途作为文字约束使用；当前美术方案不包含自动看图分析。</p>}
         {r?.objects&&!task.dismissed&&<div><h4>选择要采用的对象更新</h4>{r.objects.map(o=>{const selected=chosen[task.id]?.objectIds??r.objects!.map(o=>o.id);const existing=project.concepts.find(c=>c.id===o.id);return <label className="workflow-check" key={o.id}><input type="checkbox" checked={selected.includes(o.id)} onChange={e=>setChosen(state=>({...state,[task.id]:{...state[task.id],objectIds:e.target.checked?[...selected,o.id]:selected.filter(id=>id!==o.id)}}))}/><span>{existing?'更新':'新增'} · {o.name}{existing&&<small>当前：{existing.description}</small>}<small>建议：{o.description}</small></span></label>;})}</div>}
         {!contentMode&&Boolean(task.args.fromNovel)&&r?.sections&&!task.dismissed&&<div><p>正文中的设定仅作为更新建议，选择后采用。</p>{Object.keys(r.sections).map(key=>{const selected=chosen[task.id]?.sectionKeys??Object.keys(r.sections!);return <label key={key} className="workflow-check"><input type="checkbox" checked={selected.includes(key)} onChange={e=>setChosen(state=>({...state,[task.id]:{...state[task.id],sectionKeys:e.target.checked?[...selected,key]:selected.filter(k=>k!==key)}}))}/>{sectionNames[key]}</label>;})}</div>}
-        {task.status==='succeeded'&&!task.dismissed&&!r?.notes&&<>{stale&&<p className="muted">生成依据已更新，结果保留供复制或下载，不能覆盖当前内容。</p>}<Button disabled={stale||chosen[task.id]?.sectionKeys?.length===0||chosen[task.id]?.objectIds?.length===0} onClick={()=>void adopt(task)}>{contentMode?(r?.sections?`采用选中的 ${chosen[task.id]?.sectionKeys?.length ?? Object.keys(r.sections).length} 个小节`:'采用此处修改'):r?.asset?(task.kind==='cover'?'采用封面':'放入图片候选'):'采用结果'}</Button></>}
+        {task.status==='succeeded'&&!task.dismissed&&!r?.notes&&<>{stale&&<p className="muted">生成依据已更新，结果保留供复制或下载，不能覆盖当前内容。</p>}<Button disabled={stale||r?.videoClip?.validation?.status==='failed'||chosen[task.id]?.sectionKeys?.length===0||chosen[task.id]?.objectIds?.length===0} onClick={()=>void adopt(task)}>{contentMode?(r?.sections?`采用选中的 ${chosen[task.id]?.sectionKeys?.length ?? Object.keys(r.sections).length} 个小节`:'采用此处修改'):r?.asset?(task.kind==='cover'?'采用封面':'放入图片候选'):'采用结果'}</Button></>}
         {task.status==='succeeded'&&!task.dismissed&&r?.title&&<Button variant="secondary" disabled={stale} onClick={()=>void adopt(task,true)}>采用并使用建议名称</Button>}
         {task.status==='succeeded'&&!task.dismissed&&!task.args.fromNovel&&!r?.notes&&!contentMode&&['creative','art'].includes(task.kind)&&project.stage<4&&<Button variant="secondary" disabled={stale} onClick={()=>void adopt(task,false,true)}>采用并进入下一阶段</Button>}
         {['failed','cancelled'].includes(task.status)&&!task.dismissed&&<Button variant="secondary" disabled={submitting} onClick={()=>void run(task.kind,task.args,task.id)}>重新生成（新请求）</Button>}
@@ -124,7 +149,7 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
     {tasks.length>0&&<Button variant="ghost" onClick={()=>setShowHistory(!showHistory)}>{showHistory?'收起历史':'查看历史结果'}</Button>}
   </section>;
   const readiness=!demo && project && serviceStatus && !serviceStatus.text.configured && (project.stage<3 || (project.stage===4&&project.type==='novel')) && <div className="generation-readiness"><div><strong>网页 AI 文字生成还需配置</strong><p>可以先直接编辑；也可以在 WorkBuddy 对话中创作并保存到这个项目。</p></div><Button variant="secondary" onClick={()=>window.dispatchEvent(new Event('workbench-open-settings'))}>配置文字服务</Button></div>;
-  return {controls:{run,busy:submitting,contentBusy,provider,ratio,setProvider,setRatio},panel,readiness};
+  return {controls:{run,fitFrame,busy:submitting,contentBusy,provider,ratio,setProvider,setRatio},panel,readiness};
 }
 
 export function GenerationServiceStatus(){

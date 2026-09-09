@@ -5,6 +5,7 @@ import { loadManifest } from '../lib/workbench/runtime.mjs';
 import { coreTools } from '../lib/workbench/core-contract.mjs';
 import { createRuntimeClient } from '../lib/workbench/mcp-runtime.mjs';
 import { ServiceError } from '../lib/workbench/errors.mjs';
+import { mcpInputSchema } from '../lib/workbench/mcp-input.mjs';
 
 const runtime = createRuntimeClient({ autoStart: process.argv.includes('--ensure-runtime') });
 const server = new McpServer({ name: 'creativity-workbench', version: '0.4.0' }, {
@@ -15,7 +16,7 @@ server.registerResource('manifest', 'workbench://manifest', { mimeType: 'applica
 }));
 for (const [name, tool] of Object.entries(coreTools)) {
   server.registerTool(name, {
-    description: tool.description, inputSchema: tool.schema,
+    description: tool.description, inputSchema: mcpInputSchema(tool.schema),
     annotations: { readOnlyHint: Boolean(tool.readOnly), destructiveHint: Boolean(tool.destructive) || ['project_update', 'knowledge_apply', 'task_adopt', 'media_import'].includes(name), idempotentHint: tool.idempotent !== false, openWorldHint: Boolean(tool.openWorld) },
   }, async input => {
     try {

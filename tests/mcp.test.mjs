@@ -55,6 +55,24 @@ async function setup(t) {
 const site = () => ({ title: '岭南手艺', description: '用户提供的资料', accent: '#35765d', theme: 'paper', pages: [{ id: 'home', title: '首页', intro: '骑楼下', sections: [{ kind: 'text', title: '说明', body: '真实保存的文案', items: [] }] }], limitations: [] });
 const video = () => ({ ratio: '16:9', burnSubtitles: false, keepAudio: false, shots: [{ id: 'shot-a', title: '街巷', visual: '日光移动', camera: '推进', duration: 2, narration: '街巷', subtitle: '街巷', revision: '' }] });
 
+test('real stdio: encoded arrays and JSON fallback preserve strict validation and canonical retries',async t=>{
+  const {call,client}=await setup(t);
+  const created=await call('project_create',{requestId:uid(),idea:'数组兼容',type:'video'});
+  const input={requestId:uid(),projectId:created.projectId,expectedVersion:created.projectVersion,entryIds:'["guangcai"]'};
+  const selected=await call('knowledge_apply',input);
+  assert.equal((await call('knowledge_apply',{...input,entryIds:['guangcai']})).replayed,true);
+  const patch={requestId:uid(),projectId:created.projectId,expectedVersion:selected.projectVersion,patch:{video:{...video(),shots:JSON.stringify(video().shots.map(s=>({...s,conceptIds:'[]'})))}}};
+  const saved=await call('project_update',patch);
+  const read=await call('project_get',{projectId:created.projectId});assert.deepEqual(read.project.video.shots[0].conceptIds,[]);
+  for(const bad of ['guangcai','{"0":"guangcai"}','[123]'])await call('knowledge_apply',{...input,requestId:uid(),expectedVersion:saved.projectVersion,entryIds:bad},true);
+  const update={requestId:uid(),projectId:created.projectId,expectedVersion:saved.projectVersion,patch:{title:'兼容入口保存'}};
+  await call('workbench_call_json',{tool:'project_update',argumentsJson:JSON.stringify(update)});
+  assert.equal((await call('project_update',update)).replayed,true);
+  for(const args of [{tool:'workbench_call_json',argumentsJson:'{}'},{tool:'project_update',argumentsJson:'[]'},{tool:'project_update',argumentsJson:JSON.stringify({...update,patch:{unknown:true}})}])await call('workbench_call_json',args,true);
+  const tools=(await client.listTools()).tools;assert.ok(tools.find(t=>t.name==='knowledge_apply').inputSchema.properties.entryIds.anyOf.some(s=>s.type==='string'));
+  assert.equal((await call('project_get',{projectId:created.projectId})).project.title,'兼容入口保存');
+});
+
 test('real stdio client: selects sourced knowledge and delivers it without provider credentials',async t=>{
   const {call}=await setup(t);
   const found=await call('knowledge_search',{query:'木雕',region:'潮汕'});
@@ -184,7 +202,7 @@ test('MCP hands images and audio to its calling conversation, imports actual vid
   assert.equal(request.inputImages.length, 1); assert.deepEqual(await readFile(request.inputImages[0]), png);
   await call('task_cancel', { taskId: editTask.requestId });
   await writeFile(editing.handoff.output, png);
-  assert.equal((await call('task_get', { taskId: editTask.requestId })).recoveredAfterCancel, true);
+  assert.equal((await until(editTask.requestId)).recoveredAfterCancel, true);
   current = await call('project_get', { projectId });
   const imageImport = { requestId: uid(), projectId, expectedVersion: current.projectVersion, filename: 'reference.png', role: 'image' };
   await writeFile(join(current.inbox, 'reference.png'), png);

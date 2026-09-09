@@ -642,3 +642,13 @@ a { color:var(--green); }
 .knowledge-card a { text-decoration: underline; overflow-wrap: anywhere; }
 .knowledge-context { font: inherit; font-size: 13px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 400px; overflow: auto; }
 @media (max-width: 640px) { .knowledge-grid,.knowledge-filters { grid-template-columns: 1fr; } }
+
+.image-comparison-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.image-comparison-grid figure { margin: 0; min-width: 0; }
+.image-comparison-grid figcaption { margin-bottom: 8px; font-weight: 600; }
+.comparison-viewport { aspect-ratio: 1; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--sage); }
+.comparison-viewport > div { width: 100%; height: 100%; }
+.comparison-viewport img { width: 100%; height: 100%; object-fit: contain; }
+.comparison-controls { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 16px 0; }
+.comparison-controls input { width: 100%; }
+@media(max-width:640px) { .image-comparison-grid,.comparison-controls { grid-template-columns: 1fr; } }

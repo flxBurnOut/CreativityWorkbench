@@ -3,7 +3,7 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
   const { path } = await context.params;
   const route = path.join('/');
   if(path[0]==='source-preview'&&path.slice(2).some(part=>!part||part==='.'||part==='..'||/[\\/]/.test(part)))return Response.json({error:'预览路径无效。'},{status:400});
-  if (!/^(source-preview\/[a-f0-9]{64}\.zip\/[^?#]+|workspace|status|settings|recovery|media|media\/[a-f0-9]{64}|files\/(website-source|mp4|wav|[a-f0-9]{64}\.(mp4|wav|html|zip|srt)|restore\/[a-f0-9]{64}\.(mp4|wav|html|zip|srt))|tasks|tasks\/[a-zA-Z0-9_-]{1,80}(\/(cancel|dismiss))?)$/.test(route)) return Response.json({ error: '接口不存在。' }, { status: 404 });
+  if (!/^(source-preview\/[a-f0-9]{64}\.zip\/[^?#]+|core\/(project_get|video_frame_fit)|workspace|status|settings|recovery|media|media\/[a-f0-9]{64}|files\/(website-source|mp4|wav|[a-f0-9]{64}\.(mp4|wav|html|zip|srt)|restore\/[a-f0-9]{64}\.(mp4|wav|html|zip|srt))|tasks|tasks\/[a-zA-Z0-9_-]{1,80}(\/(cancel|dismiss))?)$/.test(route)) return Response.json({ error: '接口不存在。' }, { status: 404 });
   if (route === 'settings' && !['localhost', '127.0.0.1', '[::1]'].includes(new URL(request.url).hostname)) return Response.json({ error: 'API 配置仅限本机访问。' }, { status: 403 });
   const origin = request.headers.get('origin');
   // Opaque sandbox documents load classic scripts/styles without an Origin header.

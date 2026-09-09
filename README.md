@@ -1,6 +1,8 @@
 # 创意工作台
 
-> **2026-09-09 功能核查与知识库：** 已修复双端同步、保存冲突与任务采用等问题，并加入首批 10 条可追溯岭南文化资料。页面“确定创意 → 选择文化资料”可选用；WorkBuddy 使用 knowledge_search / knowledge_apply。当前 Skills 0.4.0、核心协议 5，更新后重启 Runtime 并重新导入接入包。详见[核查结果](docs/FUNCTIONAL_AUDIT_2026-09-09.md)与[主题知识说明](docs/LINGNAN_KNOWLEDGE.md)。
+> **2026-09-09 实际验收修复：** 已补数组传参兼容、视频首帧适配与输出规格检查、网站浏览器验收记录、小说标题去重和图片返工对比。详见[修复与复测结果](docs/WORKBUDDY_ACCEPTANCE_FIXES_2026-09-09.md)。本版需要重新导入 Skills 并重启 Runtime。
+
+> **2026-09-09 功能核查与知识库：** 已修复双端同步、保存冲突与任务采用等问题，并加入首批 10 条可追溯岭南文化资料。页面“确定创意 → 选择文化资料”可选用；WorkBuddy 使用 knowledge_search / knowledge_apply。当前 Skills 0.5.0、核心协议 6，更新后重启 Runtime 并重新导入接入包。详见[核查结果](docs/FUNCTIONAL_AUDIT_2026-09-09.md)与[主题知识说明](docs/LINGNAN_KNOWLEDGE.md)。
 
 > **2026-09-09 前端流程整理：** 首页按故事、视频、网站与 3D 前期设计展示功能和交付物；项目显示分步说明、可选步骤及明确的下一步。网站按“准备需求 → WorkBuddy 制作 → 导入与预览”操作。初次使用请看[前端操作流程](docs/FRONTEND_WORKFLOW.md)，也可直接打开页面里的“功能与操作说明”。
 
@@ -8,7 +10,7 @@
 >
 > **问题修复：** 当前问题处理、保留范围及回归说明见[2026-09-08 修复记录](docs/问题修复记录-2026-09-08.md)。
 
-> **WorkBuddy 核心接入：** 已封装 2 项项目 Skills、21 个 stdio MCP 工具及本机连接包生成命令 `npm run workbench:setup`，新增只读 `prompt_prepare`。覆盖项目、文字、概念图、单镜头视频和网站生成任务交接。WorkBuddy 实际加载由用户手动测试；使用方法见 [核心接入与验收](docs/WORKBUDDY_CORE.md)。历史章节中的“MCP 只读清单”已由核心接入替代。
+> **WorkBuddy 核心接入：** 已封装 2 项项目 Skills、23 个 stdio MCP 工具及本机连接包生成命令 `npm run workbench:setup`，新增只读 `prompt_prepare`。覆盖项目、文字、概念图、单镜头视频和网站生成任务交接。WorkBuddy 实际加载由用户手动测试；使用方法见 [核心接入与验收](docs/WORKBUDDY_CORE.md)。历史章节中的“MCP 只读清单”已由核心接入替代。
 >
 > **2026-09-08 最新实现：统一提示词与文化约束。** 各阶段按作品类型组织文化背景与输入；概念图区分用途，视频可直接输入并生成单镜头。网站新任务只准备可编辑提示词与实际素材包，完整网站由模型／外部 agent 实现，不再套用工作台固定模板。旧网站文件、分镜、配音和合成工具保留。详见[提示词与 Harness](docs/PROMPT_HARNESS.md)。本地与模拟验证不代表真实服务、文化或作品质量已验收；3D 仍排最后。历史章节中的旧网站模板能力仅作兼容记录。
 

@@ -10,9 +10,19 @@ export class WorkbenchApiError extends Error {
 }
 export async function api<T = Record<string,unknown>>(path: string, method = 'GET', input?: unknown):Promise<T> {
   const options = method === 'GET' ? {} : { headers: { 'Content-Type': 'application/json' }, body: input === undefined ? undefined : JSON.stringify(input) };
-  const response = await fetch('/api/workbench/data/' + path, { method, cache: 'no-store', ...options, signal: AbortSignal.timeout(30000) });
+  let response: Response;
   let data: unknown;
-  try { data = await response.json(); } catch { throw new WorkbenchApiError('服务返回了无法读取的响应，请检查服务连接后重试。', response.status); }
+  try {
+    response = await fetch('/api/workbench/data/' + path, { method, cache: 'no-store', ...options, signal: AbortSignal.timeout(30000) });
+    try { data = await response.json(); }
+    catch (e) {
+      if (e instanceof Error && ['TimeoutError','AbortError'].includes(e.name)) throw e;
+      throw new WorkbenchApiError('服务返回了无法读取的响应，请检查服务连接后重试。', response.status);
+    }
+  } catch (e) {
+    if (e instanceof Error && ['TimeoutError','AbortError'].includes(e.name)) throw new WorkbenchApiError('工作台响应超时，暂时无法确认任务状态。请稍后刷新状态，避免重复点击生成。', 504, 'timeout');
+    throw e;
+  }
   const { error, code } = (data ?? {}) as {error?:unknown;code?:unknown};
   if (!response.ok) throw new WorkbenchApiError(typeof error === 'string' ? error : '服务未完成请求。', response.status, typeof code === 'string' ? code : undefined);
   return data as T;

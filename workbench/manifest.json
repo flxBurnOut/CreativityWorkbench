@@ -143,16 +143,18 @@
         "project_deliver",
         "task_dismiss",
         "workspace_recover",
-        "storage_cleanup"
+        "storage_cleanup",
+        "video_frame_fit",
+        "workbench_call_json"
       ],
       "skills": [
         "workbench/skills/creativity-project",
         "workbench/skills/creativity-media"
       ],
       "configuration": "npm run workbench:setup",
-      "validation": "local-stdio-and-files-tested; WorkBuddy-client-and-real-provider-not-verified",
-      "protocolVersion": 5,
-      "skillVersion": "0.4.0"
+      "validation": "local-stdio-and-files-tested; protocol-5-user-acceptance-recorded; protocol-6-WorkBuddy-client-retest-required",
+      "protocolVersion": 6,
+      "skillVersion": "0.5.0"
     },
     {
       "id": "service-settings",
@@ -179,7 +181,7 @@
       "transport": "http",
       "endpoint": "/v1/core/workflow_get",
       "mutationEndpoint": "/v1/core/workflow_update",
-      "protocolVersion": 5,
+      "protocolVersion": 6,
       "validation": "local-workflow-and-stdio-tested; real-provider-not-verified"
     },
     {

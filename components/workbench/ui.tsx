@@ -67,7 +67,7 @@ export function AssetImage({ asset, alt, className = '' }: { asset?: ImageAsset;
     setUrl(asset?.fileId ? '/api/workbench/data/media/' + asset.fileId : asset?.demoSrc ?? '');
   }, [asset?.blob, asset?.demoSrc, asset?.fileId]);
   if (!url || failed) return <div className={`image-fallback ${className}`}><Icon name="image" size={30} /><span>{failed ? '图片暂时无法显示' : '还没有图片'}</span></div>;
-  return <img src={url} className={className} alt={alt} onError={() => setFailed(true)} />;
+  return <img src={url} className={className} alt={alt} loading="lazy" decoding="async" onError={() => setFailed(true)} />;
 }
 
 export function Field({ label, hint, children, group = false }: { label: string; hint?: string; children: ReactNode; group?: boolean }) {

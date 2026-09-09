@@ -95,8 +95,12 @@ test('selected concepts prepare a real frame candidate, then that exact adopted 
   const frameAsset=p.assets.find(a=>a.id===p.video.shots[0].frameCandidate);assert.equal(assetChanges(p,frameAsset).length,0);
   p.video.shots[0].referenceAssetId=frameAsset.id;p.video.shots[0].frameCandidate=undefined;p.video.shots[0].prompt='当代潮汕，阿澄保持现代衬衫，在雨后街巷缓缓打开旧伞，固定中景，5 秒。';p.video.shots[0].promptBasis=videoPromptBasis(p,p.video.shots[0]);p=await h.save(p);
   assert.equal(assetChanges(p,frameAsset).length,0,'adopting the prepared frame does not change its generation inputs');
+  const current=await h.core.call('project_get',{projectId:p.id});
+  await h.core.call('video_frame_fit',{projectId:p.id,expectedVersion:current.projectVersion,requestId:uid(),objectId:'shot-a',fit:'pad'});p=await h.get();
+  const fitted=p.assets.find(a=>a.id===p.video.shots[0].referenceAssetId);assert.equal(fitted.source.parentAssetId,frameAsset.id);assert.deepEqual(await h.repo.media(frameAsset.fileId),frame);
+  p.video.shots[0].promptBasis=videoPromptBasis(p,p.video.shots[0]);p=await h.save(p);
   await h.run('video-shot',{provider:'external',objectId:'shot-a'},'waiting_provider');const sent=requests.find(r=>r.kind==='video').body;
-  assert.equal(sent.promptText,p.video.shots[0].prompt);assert.deepEqual(Buffer.from(sent.promptImage.split(',')[1],'base64'),await h.repo.media(frameAsset.fileId));assert.equal(sent.duration,5);
+  assert.equal(sent.promptText,p.video.shots[0].prompt);assert.deepEqual(Buffer.from(sent.promptImage.split(',')[1],'base64'),await h.repo.media(fitted.fileId));assert.equal(sent.duration,5);
 });
 
 test('website source is imported as a candidate, adopted, packaged exactly for the next round, and old source is retained',async t=>{
@@ -104,9 +108,10 @@ test('website source is imported as a candidate, adopted, packaged exactly for t
   const source1=Buffer.from(zipSync({'index.html':strToU8('<!doctype html><button id="filter">Q-027</button><script>document.querySelector("button").onclick=()=>document.querySelector("button").textContent="changed"</script>'),'README.md':strToU8('Open index.html')}));
   await writeFile(join(await h.repo.inbox(p.id),'source.zip'),source1);
   let current=await h.core.call('project_get',{projectId:p.id});
-  const imported=await h.core.call('website_source_import',{projectId:p.id,expectedVersion:current.projectVersion,requestId:uid(),filename:'source.zip',instructions:'打开 index.html',verification:'执行端报告：已测试按钮'});
+  const imported=await h.core.call('website_source_import',{projectId:p.id,expectedVersion:current.projectVersion,requestId:uid(),filename:'source.zip',instructions:'打开 index.html',verification:'执行端报告：已测试按钮',verificationMethod:'user-browser',verificationResult:'failed',verificationEvidence:'实际浏览器再次展开失败'});
   p=await h.get();assert.equal(p.websiteSource,undefined);assert.ok(p.websiteSourceCandidate);
   await h.core.call('workflow_update',{projectId:p.id,expectedVersion:imported.projectVersion,requestId:uid(),action:'adopt-website-source'});p=await h.get();assert.deepEqual(await h.repo.output(p.websiteSource.fileId),source1);
+  const delivered=await h.core.call('project_deliver',{projectId:p.id,format:'all'});assert.equal(delivered.partial,true);assert.equal(delivered.files.find(f=>f.role==='website-source').verification.browserStatus,'reported-fail');assert.equal(parseStoredWorkspace({version:1,revision:1,workspace:workspace(p)}).workspace.projects[0].websiteSource.verificationEvidence,'实际浏览器再次展开失败');
   p.requests[4]='仅调整筛选，不改变原有页面和技术';p.websiteRequest={prompt:'读取 existing-website.zip，保留 Q-027 和现有实现，只完善筛选。',basis:websitePromptBasis(p),assetIds:[]};p.websiteRequest.basis=websitePromptBasis(p);p=await h.save(p);
   p=await h.adopt(await h.run('website',{action:'generate'}));const entries=unzipSync(await h.repo.output(p.websiteRequest.bundleFileId));assert.deepEqual(Buffer.from(entries['existing-website.zip']),source1);
   const first=p.websiteSource.fileId;const oldRecord=p.flow.records.findLast(r=>r.target==='websiteSource');

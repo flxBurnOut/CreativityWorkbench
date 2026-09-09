@@ -20,7 +20,8 @@ export const CONTENT_SECTIONS: Record<WorkType, { key: string; label: string; hi
 
 export interface ImageAsset { id: string; name: string; blob?: Blob; demoSrc?: string; fileId?: string; source?: Record<string,string> }
 export interface StyleReference { id: string; assetId: string; purpose: string }
-export interface MediaFile { fileId:string; duration:number; source:string; taskId?:string }
+export interface MediaValidation { status:'passed'|'failed'|'unverified'; requested:{ratio:string;duration:number}; actual:{width?:number;height?:number;duration:number;displayAspectRatio:number}; issues:string[] }
+export interface MediaFile { fileId:string; duration:number; source:string; taskId?:string; width?:number;height?:number;displayAspectRatio?:number;videoCodec?:string;audio?:boolean;validation?:MediaValidation }
 export interface VideoShot { id:string; title:string; visual:string; camera:string; duration:number; narration:string; subtitle:string; revision:string; prompt?:string; promptBasis?:string; referenceAssetId?:string; referenceConceptId?:string; conceptIds?:string[]; contentKeys?:string[]; frameReferenceIds?:string[]; frameInstruction?:string; frameCandidate?:string; clip?:MediaFile; audio?:MediaFile }
 export interface VideoDraft { ratio:'16:9'|'9:16'; shots:VideoShot[]; burnSubtitles:boolean; keepAudio:boolean; music?:MediaFile; final?:MediaFile & {subtitleFileId:string} }
 export interface SiteItem { title:string; text:string; tag:string; assetId?:string }
@@ -28,14 +29,16 @@ export interface SiteSection {kind:'text'|'gallery'|'faq';title:string;body:stri
 export interface SiteSpec {title:string;description:string;accent:string;theme:'paper'|'night';pages:{id:string;title:string;intro:string;sections:SiteSection[]}[];limitations:string[]}
 export interface WebsiteDraft {spec:SiteSpec;builtSpec?:SiteSpec;previewFileId?:string;zipFileId?:string}
 export interface WebsiteRequest {prompt:string;basis:string;assetIds:string[];bundleFileId?:string;source?:string;taskId?:string}
-export interface WebsiteSource {fileId:string;entryCount:number;description:string;instructions:string;verification:string;taskId?:string;requestSource?:string;importedAt:number;previewPath?:string}
+export interface WebsiteSource {verificationMethod?:'not-tested'|'static'|'browser'|'user-browser';verificationResult?:'not-tested'|'passed'|'failed';verificationEvidence?:string;fileId:string;entryCount:number;description:string;instructions:string;verification:string;taskId?:string;requestSource?:string;importedAt:number;previewPath?:string}
 export interface FlowRecord {id:string;type:WorkType;target:string;createdAt:number;origin:string;taskId?:string;fingerprint:string;value:any;dependencies:{key:string;label:string;fingerprint:string}[]}
 export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];transfer?:Project['transfer']}
 export interface Concept {
   id: string; category: Category; name: string; description: string;
   candidateAssetId?: string; savedAssetId?: string; prompt: string; revisionRequest: string;
   sourceKeys?:string[]; referenceAssetIds?:string[]; usage?:string; inheritedFrom?:{type:string;id:string};
+  imageReview?:ImageReview;
 }
+export interface ImageReview {assetId:string;parentAssetId:string;changesVisible:boolean;preserved:boolean;notes:string;checkedAt:number}
 export interface Project {
   id: string; title: string; type: WorkType; createdAt: number; updatedAt: number; stage: number;
   idea: string; brief: string; culture: string;
@@ -87,6 +90,9 @@ export function pruneAssets(project: Project): Project {
   for(const s of project.video?.shots||[])for(const id of [s.frameCandidate,...(s.frameReferenceIds||[])])referenced.add(id);
   // History restoration must keep its actual image files addressable.
   for(const r of project.flow?.records||[])if(r.target.startsWith('concept:')||r.target.startsWith('shot:'))for(const id of [r.value?.savedAssetId,r.value?.candidateAssetId,r.value?.referenceAssetId,...(r.value?.referenceAssetIds||[]),...(r.value?.frameReferenceIds||[])])referenced.add(id);
+  // Keep every referenced edit's ancestors available for visual comparison.
+  const byId=new Map(project.assets.map(asset=>[asset.id,asset]));
+  for(const id of referenced) {const parent=id?byId.get(id)?.source?.parentAssetId:undefined;if(parent)referenced.add(parent);}
   return { ...project, assets: project.assets.filter(asset => referenced.has(asset.id)) };
 }
 

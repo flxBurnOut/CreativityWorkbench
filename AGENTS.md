@@ -1,5 +1,7 @@
 # 项目约定
 
+- 2026-09-09 实际验收修复：当前核心协议 6、23 工具、Skills 0.5.0。新增 video_frame_fit 和受限 workbench_call_json。视频规格与文件可解码、依据新鲜度分开；网站外部验收报告不等于 Runtime 独立验证。MCP 原生数组与 JSON 数组字符串在传输层兼容，Runtime 保持严格类型、版本和幂等检查。历史段落中的工具数/协议是当时状态。见 docs/WORKBUDDY_ACCEPTANCE_FIXES_2026-09-09.md。
+
 - 2026-09-09：用户要求文化库独立于游戏，不导入《织梦者》原项目作为默认知识。首批知识源在 workbench/knowledge/lingnan-2026-09-09.mjs；事实有出处，创作转译与事实分开，跨区域不得混为同一民俗。已发布知识版本保持可解析；后续修订新增版本并保留旧版注册。knowledge_search / knowledge_apply 共用 Runtime；资料引用参与生成依据、过期检测与交付。真实服务和 WorkBuddy 实际加载另行验收。
 
 - 2026-09-08 连续创作已实现：五类型成果与历史记录、对象来源及实际参考、小说设定往返、视频可选首帧候选、网站源码候选与下一轮真实源码交接、3D 前期资料包。类型草稿分支隔离，按选择继承。新增 workflow_get、workflow_update、website_source_import，总计 21 工具／协议 5，Skills 0.4.0。保持 prompts.mjs 中的系统与文化规则。详见 docs/CONTINUOUS_WORKFLOW.md；3D 模型与长篇仍未实现。

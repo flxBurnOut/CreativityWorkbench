@@ -13,6 +13,7 @@ export function useProjectStore() {
   const failed = useRef<{ workspace: Workspace; writeId: string } | null>(null);
   const revision = useRef(0); const writing = useRef<Promise<void> | null>(null);
   const reading = useRef<ReturnType<typeof loadServerWorkspace> | null>(null);
+  const synchronizing = useRef(false);
   const memoryOnly = useRef(false); const initialized = useRef(false); const mounted = useRef(true);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const load = useCallback(async () => {
@@ -73,7 +74,8 @@ export function useProjectStore() {
     try { await request; } finally { if (writing.current === request) writing.current = null; }
   },[]);
   const synchronize = useCallback(async () => {
-    if (!initialized.current || memoryOnly.current || pending.current || failed.current || writing.current || document.visibilityState !== 'visible') return;
+    if (synchronizing.current || !initialized.current || memoryOnly.current || pending.current || failed.current || writing.current || document.visibilityState !== 'visible') return;
+    synchronizing.current = true;
     const before = current.current;
     try {
       const remote = await readServerWorkspace();
@@ -84,6 +86,7 @@ export function useProjectStore() {
       if (activeProjectId !== before.activeProjectId) window.history.replaceState(null, '', activeProjectId ? '#project/' + activeProjectId : '#projects');
       setWorkspace(current.current); setNote('已同步 WorkBuddy 或另一页面保存的内容。');
     } catch { /* Background refresh never replaces a local draft or masks a save error. */ }
+    finally { synchronizing.current = false; }
   }, []);
   useEffect(() => {
     mounted.current = true; void load();

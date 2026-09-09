@@ -35,7 +35,7 @@ async function until(tasks,id,status='succeeded') {
   throw new Error('task timeout');
 }
 async function addImages(p,repo) {
-  const image=await repo.putImage(await sharp({create:{width:12,height:12,channels:3,background:'red'}}).png().toBuffer());
+  const image=await repo.putImage(await sharp({create:{width:32,height:18,channels:3,background:'red'}}).png().toBuffer());
   p.assets=[{id:'style',name:'只参考光线',fileId:image.fileId},{id:'selected',name:'阿澄概念图',fileId:image.fileId},{id:'candidate',name:'未采用候选',fileId:image.fileId}];
   p.references=[{id:'ref',assetId:'style',purpose:'只参考雨后光线，不复制人物和地域'}];
   p.concepts=[{id:'person',name:'阿澄',category:'character',description:'现代衬衫，保留旧伞竹柄',savedAssetId:'selected',candidateAssetId:'candidate',prompt:'',revisionRequest:''}];

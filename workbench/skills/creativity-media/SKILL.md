@@ -3,7 +3,7 @@ name: creativity-media
 description: 通过创意工作台 MCP 整理概念图与单镜头提示词、交接实际媒体，或获取网站生成任务与素材并由当前 agent 完整实现网站；保留旧视频合成与网站文件。
 description_zh: 在 WorkBuddy 对话中完成概念图、单镜头视频和网站生成任务交接。
 description_en: Prepare project prompts and media handoffs, generate single shots, and implement websites from Workbench request bundles using the current agent.
-version: 0.4.0
+version: 0.5.0
 author: CreativityWorkbench
 ---
 
@@ -38,3 +38,7 @@ author: CreativityWorkbench
 文化资料独立于游戏设定，不默认导入《织梦者》原项目。`knowledge_search` 按文化元素或地域返回有出处的事实、转译建议和边界；根据用户目标选择相关条目，用 `knowledge_apply` 加入项目。没有明确相关性时保留待选，不为凑数量混入各地域元素。`project_get.knowledgeContext` 是已选版本的完整文本，直接在当前对话写作时也要读取；不把创作建议或用户虚构写成真实历史。
 
 知识写入遵循相同的 requestId 与 expectedVersion 规则。`knowledge_apply` 支持 add/remove/replace，不覆盖用户 culture 字段。修改选用资料后检查已有提示词和作品的过期标记；不自动重新生成。网站与设计任务包包含 KNOWLEDGE.md；全部交付可返回 theme-knowledge 文本。来源查阅说明见 [岭南知识资料](references/lingnan-knowledge.md)，按需只读相关条目。
+
+## 验收与传参兼容
+
+本版要求核心协议 6、23 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
