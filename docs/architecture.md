@@ -1,13 +1,18 @@
 # 当前架构
 
+> 当前提示词与交付边界见 [提示词与 Harness](PROMPT_HARNESS.md)：视频以单镜头为主入口；网站新任务只准备提示词与素材，由执行模型完整实现。本文旧网站模板与构建描述作为兼容记录。
+
 更新日期：2026-09-08。Web 页面 → 同源 HTTP 代理 → 本机共享 Runtime → 持久化与模型适配器；WorkBuddy Skills → stdio MCP → 同一 Runtime 的核心接口。CLI 保留发现／诊断，并提供本机接入包生成命令。
 
 | 模块 | 职责 |
 | --- | --- |
 | `features/creative-flow/workbench.tsx` / `stages.tsx` | 岭南主题项目管理、五阶段编辑、概念图及短篇交付 |
 | `features/creative-flow/generation-api.tsx` | 任务提交、查询、取消等待、结果预览／采用、服务状态 |
+| `lib/workbench/workflow.mjs` / `features/creative-flow/workflow-panel.tsx` | 共享依据解析、类型分支、采用历史、相关变化与来源展示 |
+| `lib/workbench/workflow-delivery.mjs` | 网站源码 ZIP 检查／候选、静态预览约束与 3D 前期资料打包 |
+| `lib/workbench/preview-dev.mjs` / `vite.config.ts` | 开发环境限定 GET 的不可变源码预览路径，兼容不透明沙箱资源请求 |
 | `lib/workbench/project-core.mjs` | Web 与 MCP 共享项目默认值、当前输入校验和结果采用 |
-| `lib/workbench/core-contract.mjs` / `core-service.mjs` | 12 项核心工具的参数约束、项目更新、采用、媒体导入与交付 |
+| `lib/workbench/core-contract.mjs` / `core-service.mjs` | 19 项核心工具的参数约束、项目更新、采用、媒体导入与交付 |
 | `scripts/workbench-mcp.mjs` / `lib/workbench/mcp-runtime.mjs` | stdio 协议、共享 Runtime 发现与按需启动，不另建数据写入器 |
 | `workbench/skills/` / `scripts/workbench-setup.mjs` | 两项 WorkBuddy Skills、ZIP 与本机连接配置 |
 | `features/projects/server-store.ts` / `use-project-store.ts` | 文件上传、服务端快照、保存串行化、旧草稿迁移 |

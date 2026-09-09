@@ -18,6 +18,8 @@
 | concepts | 对象数组，每项 id、category（character/map/object）、name、description、prompt、revisionRequest；可选 candidateAssetId、savedAssetId |
 | references | 参考图数组，每项 id、assetId、purpose；生图时最多使用 4 张 |
 | delivery | notes、textFormat（md/txt）、ratio、duration，均为字符串 |
+| video.shots[] | 单镜头：id、title、visual、camera、duration、narration、subtitle、revision；可选首帧 referenceAssetId、最终 prompt 与 promptBasis |
+| websiteRequest | prompt、basis、assetIds；basis 由 prompt_prepare 返回，assetIds 是明确允许用于网站的素材 |
 
 创建小说项目：`project_create({requestId:新的UUID, idea:用户想法, type:"novel", title:作品名})`。后续先读取项目，再更新：
 
@@ -40,3 +42,8 @@
 概念图候选需要确定为定稿时，读取现有 concepts 数组，仅把目标对象的 `savedAssetId` 设为该对象 `candidateAssetId`，保留其他对象再写回。封面可设置 `coverAssetId` 与 `manualCover:true`；取消封面指定 `coverAssetId:null`。
 
 导出：`project_deliver({projectId,format:"txt"})` 或 `format:"md"`。工具返回实际文件 `path` 和 `url`。网页、视频和图片用 `format:"all"`。本轮没有执行生成／保存的内容不要声称已经完成。
+
+美术独立字段是当前有效要求，旧 fullPrompt 不能覆盖其中冲突项。视频最终编辑稿保存到对应镜头 prompt，并附本次 prompt_prepare 的 basis 作为 promptBasis；项目背景改变后需重新核对。网站交接前保存 websiteRequest；task_start(kind:"website") 只准备提示词和素材包。website.spec 与 website-build 保留用于旧模板项目，不作为新网站的生成契约。
+
+
+连续创作新增接口与字段见 [continuous-workflow.md](continuous-workflow.md)：实际首帧、已确认对象引用、类型分支和恢复，以及 website_source_import → workflow_update adopt-website-source → 下一轮源码任务包。

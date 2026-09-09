@@ -1,6 +1,8 @@
 import { createProject } from '../../lib/workbench/project-core.mjs';
 export { createProject };
-import { validateVideo, validateWebsite } from '../../lib/workbench/output-contract.mjs';
+import { validateVideo, validateWebsite, validateWebsitePrompt } from '../../lib/workbench/output-contract.mjs';
+import { switchWorkType, validateFlowState, projectForType, BRANCH_FIELDS } from '../../lib/workbench/workflow.mjs';
+export { switchWorkType };
 export const WORK_TYPES = ['undecided', 'novel', 'video', 'website', 'craft'] as const;
 export type WorkType = typeof WORK_TYPES[number];
 export const TYPE_LABELS: Record<WorkType, string> = { undecided: '暂未确定', novel: '小说', video: '视频', website: '网站', craft: '3D 文创' };
@@ -18,15 +20,20 @@ export const CONTENT_SECTIONS: Record<WorkType, { key: string; label: string; hi
 export interface ImageAsset { id: string; name: string; blob?: Blob; demoSrc?: string; fileId?: string; source?: Record<string,string> }
 export interface StyleReference { id: string; assetId: string; purpose: string }
 export interface MediaFile { fileId:string; duration:number; source:string; taskId?:string }
-export interface VideoShot { id:string; title:string; visual:string; camera:string; duration:number; narration:string; subtitle:string; revision:string; referenceAssetId?:string; clip?:MediaFile; audio?:MediaFile }
+export interface VideoShot { id:string; title:string; visual:string; camera:string; duration:number; narration:string; subtitle:string; revision:string; prompt?:string; promptBasis?:string; referenceAssetId?:string; referenceConceptId?:string; conceptIds?:string[]; contentKeys?:string[]; frameReferenceIds?:string[]; frameInstruction?:string; frameCandidate?:string; clip?:MediaFile; audio?:MediaFile }
 export interface VideoDraft { ratio:'16:9'|'9:16'; shots:VideoShot[]; burnSubtitles:boolean; keepAudio:boolean; music?:MediaFile; final?:MediaFile & {subtitleFileId:string} }
 export interface SiteItem { title:string; text:string; tag:string; assetId?:string }
 export interface SiteSection {kind:'text'|'gallery'|'faq';title:string;body:string;items:SiteItem[]}
 export interface SiteSpec {title:string;description:string;accent:string;theme:'paper'|'night';pages:{id:string;title:string;intro:string;sections:SiteSection[]}[];limitations:string[]}
 export interface WebsiteDraft {spec:SiteSpec;builtSpec?:SiteSpec;previewFileId?:string;zipFileId?:string}
+export interface WebsiteRequest {prompt:string;basis:string;assetIds:string[];bundleFileId?:string;source?:string;taskId?:string}
+export interface WebsiteSource {fileId:string;entryCount:number;description:string;instructions:string;verification:string;taskId?:string;requestSource?:string;importedAt:number;previewPath?:string}
+export interface FlowRecord {id:string;type:WorkType;target:string;createdAt:number;origin:string;taskId?:string;fingerprint:string;value:any;dependencies:{key:string;label:string;fingerprint:string}[]}
+export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];transfer?:Project['transfer']}
 export interface Concept {
   id: string; category: Category; name: string; description: string;
   candidateAssetId?: string; savedAssetId?: string; prompt: string; revisionRequest: string;
+  sourceKeys?:string[]; referenceAssetIds?:string[]; usage?:string; inheritedFrom?:{type:string;id:string};
 }
 export interface Project {
   id: string; title: string; type: WorkType; createdAt: number; updatedAt: number; stage: number;
@@ -38,7 +45,10 @@ export interface Project {
   delivery: { notes: string; textFormat: string; ratio: string; duration: string };
   upstreamChanged: boolean;
   novel?: { title: string; text: string; taskId: string };
-  video?:VideoDraft; website?:WebsiteDraft;
+  video?:VideoDraft; website?:WebsiteDraft; websiteRequest?:WebsiteRequest;
+  websiteSource?:WebsiteSource; websiteSourceCandidate?:WebsiteSource; novelReferenceIds?:string[]; variants?:Partial<Record<WorkType,TypeBranch>>;
+  transfer?:{from:WorkType;content:Record<string,string>;source:string;note:string};
+  flow?:{version:1;records:FlowRecord[]}; designPackage?:{fileId:string;source:string;taskId:string};
 }
 export interface Workspace { projects: Project[]; activeProjectId: string | null }
 export interface StoredWorkspace { version: 1; revision: number; workspace: Workspace }
@@ -48,8 +58,33 @@ export function updateProject(workspace: Workspace, id: string, update: (project
   return { ...workspace, projects: workspace.projects.map(project => project.id === id ? { ...update(project), updatedAt: Date.now() } : project) };
 }
 
+// Saving resolves Blob assets to their content hashes without replacing newer edits.
+export function normalizeSavedAssets(current:Workspace,snapshot:Workspace,wire:Workspace):Workspace {
+  return {...current,projects:current.projects.map(p=>{
+    const original=snapshot.projects.find(item=>item.id===p.id);
+    const saved=wire.projects.find(item=>item.id===p.id);
+    if(!original||!saved)return p;
+    const flow=p.flow||saved.flow?{version:1 as const,records:[...new Map([...(saved.flow?.records||[]),...(p.flow?.records||[])].map(r=>[r.id,r])).values()]}:undefined;
+    return {...p,flow,assets:[...p.assets.map(a=>{
+      const before=original.assets.find(item=>item.id===a.id);
+      const after=saved.assets.find(item=>item.id===a.id);
+      return a.blob&&a.blob===before?.blob&&after?.fileId?{...a,fileId:after.fileId}:a;
+    }),...saved.assets.filter(a=>!p.assets.some(current=>current.id===a.id)&&!original.assets.some(before=>before.id===a.id))]};
+  })};
+}
+
 export function pruneAssets(project: Project): Project {
-  const referenced = new Set([project.coverAssetId, ...project.references.map(ref => ref.assetId), ...project.concepts.flatMap(concept => [concept.candidateAssetId, concept.savedAssetId]),...(project.video?.shots.map(s=>s.referenceAssetId)||[]),...[project.website?.spec,project.website?.builtSpec].flatMap(spec=>spec?.pages.flatMap(p=>p.sections.flatMap(s=>s.items.map(i=>i.assetId)))||[])]);
+  const referenced = new Set([project.coverAssetId, ...project.references.map(ref => ref.assetId), ...project.concepts.flatMap(concept => [concept.candidateAssetId, concept.savedAssetId]),...(project.video?.shots.map(s=>s.referenceAssetId)||[]),...(project.websiteRequest?.assetIds||[]),...[project.website?.spec,project.website?.builtSpec].flatMap(spec=>spec?.pages.flatMap(p=>p.sections.flatMap(s=>s.items.map(i=>i.assetId)))||[])]);
+  for(const branch of Object.values(project.variants||{})) {
+    for(const c of branch.concepts||[])for(const id of [c.savedAssetId,c.candidateAssetId,...(c.referenceAssetIds||[])])referenced.add(id);
+    for(const r of branch.references||[])referenced.add(r.assetId);
+    for(const s of branch.video?.shots||[])for(const id of [s.referenceAssetId,s.frameCandidate,...(s.frameReferenceIds||[])])referenced.add(id);
+    for(const id of branch.websiteRequest?.assetIds||[])referenced.add(id);
+  }
+  for(const c of project.concepts)for(const id of c.referenceAssetIds||[])referenced.add(id);
+  for(const s of project.video?.shots||[])for(const id of [s.frameCandidate,...(s.frameReferenceIds||[])])referenced.add(id);
+  // History restoration must keep its actual image files addressable.
+  for(const r of project.flow?.records||[])if(r.target.startsWith('concept:')||r.target.startsWith('shot:'))for(const id of [r.value?.savedAssetId,r.value?.candidateAssetId,r.value?.referenceAssetId,...(r.value?.referenceAssetIds||[]),...(r.value?.frameReferenceIds||[])])referenced.add(id);
   return { ...project, assets: project.assets.filter(asset => referenced.has(asset.id)) };
 }
 
@@ -57,7 +92,7 @@ export function removeConcept(project: Project, id: string): Project {
   const concepts = project.concepts.filter(concept => concept.id !== id);
   const removed = project.concepts.find(concept => concept.id === id);
   const coverWasRemoved = removed && [removed.candidateAssetId, removed.savedAssetId].includes(project.coverAssetId) && !project.manualCover;
-  return pruneAssets({ ...project, concepts, coverAssetId: coverWasRemoved ? concepts.find(concept => concept.savedAssetId)?.savedAssetId : project.coverAssetId });
+  return pruneAssets({ ...project, concepts, novelReferenceIds:project.novelReferenceIds?.filter(value=>value!==id),video:project.video?{...project.video,shots:project.video.shots.map(s=>({...s,conceptIds:s.conceptIds?.filter(value=>value!==id)}))}:undefined, coverAssetId: coverWasRemoved ? concepts.find(concept => concept.savedAssetId)?.savedAssetId : project.coverAssetId });
 }
 
 // Validate every persisted shape before editing. Unknown or damaged records must never be silently overwritten.
@@ -74,11 +109,14 @@ export function parseStoredWorkspace(value: unknown): StoredWorkspace {
     ids.add(p.id);
     if(p.video)validateVideo(p.video);
     if(p.website)validateWebsite(p.website);
+    if(p.websiteRequest)validateWebsitePrompt(p.websiteRequest);
+    validateFlowState(p);
     if (!record(p.content) || !WORK_TYPES.every(type => strings((p.content as Record<string, unknown>)[type])) || !record(p.art) || !['direction', 'material', 'palette', 'constraints', 'fullPrompt'].every(key => typeof (p.art as Record<string, unknown>)[key] === 'string') || !record(p.delivery) || !['notes', 'textFormat', 'ratio', 'duration'].every(key => typeof (p.delivery as Record<string, unknown>)[key] === 'string') || !Array.isArray(p.requests) || p.requests.length !== 5 || !p.requests.every(item => typeof item === 'string')) throw new Error('阶段草稿格式不完整。');
     if (!Array.isArray(p.assets) || !p.assets.every(a => record(a) && typeof a.id === 'string' && typeof a.name === 'string' && (a.blob instanceof Blob || (typeof a.fileId === 'string' && /^[a-f0-9]{64}$/.test(a.fileId)) || (typeof a.demoSrc === 'string' && a.demoSrc.startsWith('/art/'))))) throw new Error('图片草稿格式无法读取。');
     if (p.novel !== undefined && (!record(p.novel) || !['title','text','taskId'].every(key => typeof (p.novel as Record<string,unknown>)[key] === 'string'))) throw new Error('正文记录无法读取。');
     if (!Array.isArray(p.references) || !p.references.every(r => record(r) && ['id', 'assetId', 'purpose'].every(key => typeof r[key] === 'string'))) throw new Error('参考图片记录无法读取。');
     if (!Array.isArray(p.concepts) || !p.concepts.every(c => record(c) && ['id', 'name', 'description', 'prompt', 'revisionRequest'].every(key => typeof c[key] === 'string') && typeof c.category === 'string' && Object.hasOwn(CATEGORIES, c.category) && optionalString(c.candidateAssetId) && optionalString(c.savedAssetId))) throw new Error('概念图记录无法读取。');
+    if(p.variants!==undefined){if(!record(p.variants)||!Object.keys(p.variants).every(t=>WORK_TYPES.includes(t as WorkType))||!Object.values(p.variants).every(b=>record(b)&&Object.keys(b).every(k=>BRANCH_FIELDS.includes(k))))throw new Error('类型草稿无效。');for(const type of Object.keys(p.variants))if(type!==p.type){const branch={...projectForType(p as unknown as Project,type)};delete branch.variants;delete branch.flow;parseStoredWorkspace({version:1,revision:1,workspace:{projects:[branch],activeProjectId:null}});}}
   }
   if (ws.activeProjectId !== null && !ids.has(ws.activeProjectId as string)) throw new Error('上次打开的项目记录缺失。');
   return value as unknown as StoredWorkspace;

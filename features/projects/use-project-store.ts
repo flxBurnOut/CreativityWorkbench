@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { emptyWorkspace, type Workspace } from './model';
+import { emptyWorkspace, normalizeSavedAssets, type Workspace } from './model';
 import { loadServerWorkspace, saveServerWorkspace } from './server-store';
 
 export function useProjectStore() {
@@ -34,7 +34,14 @@ export function useProjectStore() {
         const next = failed.current || pending.current!;
         if (next === pending.current) pending.current = null;
         if (mounted.current) setStatus('saving');
-        try { revision.current = await saveServerWorkspace(next.workspace, revision.current, next.writeId); failed.current = null; }
+        try {
+          revision.current = await saveServerWorkspace(next.workspace, revision.current, next.writeId, wire=>{
+            current.current=normalizeSavedAssets(current.current,next.workspace,wire);
+            if(pending.current)pending.current={...pending.current,workspace:normalizeSavedAssets(pending.current.workspace,next.workspace,wire)};
+            if(mounted.current)setWorkspace(current.current);
+          });
+          failed.current = null;
+        }
         catch (e) {
           failed.current = next;
           if (mounted.current) { setError(e instanceof Error ? e.message : '项目未保存，请保留页面。'); setStatus('error'); }
