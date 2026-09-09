@@ -10,6 +10,7 @@ import type { EditProject, Notice } from './stages';
 import { ServiceSettings } from './service-settings';
 import { OutputTaskPreview } from './delivery-stages';
 import { FLOW_LABELS, taskStage, taskMatchesStep } from './flow-guide';
+import { HandoffRecovery } from './handoff-recovery';
 
 export type GenerationControls = {
   run:(kind:string,args?:Record<string,unknown>)=>void; busy:boolean; contentBusy?:boolean; provider:string; ratio:string;
@@ -125,6 +126,7 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
         {task.status==='waiting_external'&&<p role="status">{task.dispatch==='manual'?'请复制请求到同一台电脑的 WorkBuddy，由它生成并保存结果。':task.dispatch==='pending'?'正在向 WorkBuddy 发送请求。':task.dispatch==='conversation'?'请在发起任务的 WorkBuddy 对话中完成媒体生成并写回文件。':'已向 WorkBuddy 发送请求，等待它生成媒体文件并保存回任务目录。'}若 WorkBuddy 提出授权问题，请在该应用处理。</p>}
         {task.status==='waiting_provider'&&<p role="status">任务编号已保存，刷新只查询进度。媒体下载和处理期间可继续编辑。</p>}
         {task.handoffMessage&&(task.kind==='website'||['waiting_external','uncertain','failed'].includes(task.status))&&<details className="task-handoff" open={task.dispatch==='manual'||task.dispatch==='conversation'||undefined}><summary>下一步：复制请求到 WorkBuddy</summary><textarea readOnly aria-label="WorkBuddy 交接请求" rows={5} value={task.handoffMessage}/><Button variant="secondary" onClick={()=>void navigator.clipboard.writeText(task.handoffMessage!).then(()=>notice('已复制 WorkBuddy 请求')).catch(()=>notice('复制失败，请选中文字手动复制。'))}>复制请求</Button></details>}
+        <HandoffRecovery key={task.id} project={project} task={task} onComplete={refresh}/>
         {task.submittedPrompt&&<details><summary>实际提交的提示词与输入</summary><textarea readOnly rows={8} aria-label="实际提交提示词" value={typeof task.submittedPrompt==='string'?task.submittedPrompt:task.submittedPrompt.map(m=>m.role+'\n'+m.content).join('\n\n')}/></details>}
         {task.inputManifest&&<details><summary>这一轮实际沿用的成果</summary>{task.inputManifest.map(input=><details key={input.key}><summary>{input.label} · {input.role==='attached-image'?'实际图片附件':'文字依据'}</summary>{input.role==='attached-image'&&typeof input.value==='string'?<AssetImage asset={{id:input.key,name:input.label,fileId:input.value}} alt={input.label} className="generated-image"/>:<pre className="workflow-text">{typeof input.value==='string'?input.value:JSON.stringify(input.value,null,2)}</pre>}</details>)}</details>}
         {task.recoveredAfterCancel&&<p role="status">已找回取消等待后完成的结果，可预览后决定是否采用。</p>}{task.error&&<p role="status">{task.error}</p>}{task.note&&<p>{task.note}</p>}

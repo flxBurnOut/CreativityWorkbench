@@ -59,8 +59,8 @@ test('WorkBuddy video handoff persists actual MP4, and cancellation preserves la
 test('Runway sends documented inputs, preserves job ID on restart and never resubmits',async()=>{
   const {repo,p}=await setup();let posts=0,gets=0;const env={VIDEO_API_KEY:'test'};
   const fetchImpl=async(url,options)=>{if(url.endsWith('/text_to_video')){posts++;assert.equal(options.headers['X-Runway-Version'],'2024-11-06');assert.equal(JSON.parse(options.body).duration,2);return Response.json({id:'external-job'});}if(url.includes('/tasks/')){gets++;return Response.json({id:'external-job',status:'SUCCEEDED',output:['https://cdn.runwayml.com/result.mp4']});}assert.equal(options.headers,undefined);return new Response((await clips()).mp4);};
-  const first=createTaskManager(repo,{env,fetchImpl});const input=request(p,'video-shot',{provider:'external',objectId:'shot-a'});await first.submit(input);await until(first,input.id,'waiting_provider');first.stop();
-  const next=createTaskManager(repo,{env,fetchImpl});const done=await until(next,input.id);assert.ok(done.result.videoClip.fileId);assert.equal(posts,1);assert.ok(gets>=1&&gets<=2);const completedGets=gets;await next.get(input.id);assert.equal(posts,1);assert.equal(gets,completedGets);next.stop();
+  const first=createTaskManager(repo,{env,fetchImpl});const input=request(p,'video-shot',{provider:'external',objectId:'shot-a'});await first.submit(input);await until(first,input.id,'waiting_provider');await first.stop();
+  const next=createTaskManager(repo,{env,fetchImpl});const done=await until(next,input.id);assert.ok(done.result.videoClip.fileId);assert.equal(posts,1);assert.ok(gets>=1&&gets<=2);const completedGets=gets;await next.get(input.id);assert.equal(posts,1);assert.equal(gets,completedGets);await next.stop();
   await assert.rejects(submitVideo('x'.repeat(1001),null,shot(),'16:9',{env,fetchImpl}),e=>e.code==='prompt_too_long');
   await assert.rejects(downloadVideo('http://127.0.0.1/private',{env,fetchImpl}),e=>e.code==='output_host');
 });

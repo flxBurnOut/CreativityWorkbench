@@ -2,6 +2,8 @@
 
 ## 图片
 
+网页已有任务优先按 [已有任务交接](existing-handoff.md) 接续。下面 task_start 流程只用于用户的新生成需求；已提供原任务 ID 时跳过创建。
+
 项目中先保存目标概念对象（concepts）。`task_start` 使用 `kind:"image"`，`args:{objectId,action:"generate",provider:"workbuddy",ratio:"1:1"}`。封面使用 `kind:"cover"`，不需要 objectId；比例还可为 `3:2` / `2:3`。
 
 修改原图时先在该概念保存 `revisionRequest`，然后以 `action:"edit"` 提交。概念必须已有 candidateAssetId 或 savedAssetId。默认保留原图风格；用户明确要求变更风格时才使用 `newStyle:true`。参考图用途保存在 references[].purpose。

@@ -43,6 +43,7 @@ MCP 第一次调用工具会检查共享 Runtime。默认使用 `http://127.0.0.
 | workbench_status | 连接、配置状态、能力范围 |
 | project_list / project_get | 列表、完整草稿、版本、专属 inbox |
 | project_create / project_update | 新建与按字段更新，数组整体替换 |
+| task_complete_handoff | 将原项目 inbox 的 PNG 或已入库图片写回原图片任务目录；不新建任务，不直接采用 |
 | task_start / task_list / task_get | 生成任务及文件交接，长任务异步查询 |
 | task_cancel / task_dismiss / task_adopt | 取消等待、收起／释放占位、检查依据后采用 |
 | workspace_recover | 检查并显式恢复损坏／丢失的快照 |
@@ -50,7 +51,7 @@ MCP 第一次调用工具会检查共享 Runtime。默认使用 `http://127.0.0.
 | media_import | 从项目 inbox 导入实际图片、镜头、旁白、配乐 |
 | project_deliver | 正文 TXT/MD 和已采用媒体／HTML／ZIP 实际文件 |
 
-所有接口复用 `POST /v1/core/<工具名>`；MCP 不直接写 workspace.json 或另建 TaskManager。保留 `workbench://manifest` 资源。此处共 23 个工具，不开放删除项目、任意文件读写、Shell、安装软件、改密钥或发布网站工具。
+所有接口复用 `POST /v1/core/<工具名>`；MCP 不直接写 workspace.json 或另建 TaskManager。保留 `workbench://manifest` 资源。此处共 24 个工具，不开放删除项目、任意文件读写、Shell、安装软件、改密钥或发布网站工具。
 
 写操作使用 projectVersion 检查项目级并发；Web 更新其他项目不妨碍当前项目修改。requestId 支持同一操作幂等重放，新操作或合并后内容变化须使用新 ID；expectedVersion 不属于新记录的操作 hash。失败任务不会因同 ID 重放而再次生成，明确重生成使用新 requestId 和 retryOf。旧版收据仍按原参数重放。工作区原子保存最近 1000 次核心操作回执；更早的重试仍受版本和项目 ID 检查保护。任务提交持久保存 requestId；任务结果不因查询成功自动写回项目。采用记录和项目同时提交，重复采用不会重复追加内容。
 
@@ -66,7 +67,7 @@ MCP 第一次调用工具会检查共享 Runtime。默认使用 `http://127.0.0.
 
 以下项目只在本机保存测试资料，建议标题统一加“WB加载测试”，便于与真实作品区分。
 
-1. **发现工具**：对 WorkBuddy 说“检查创意工作台的连接状态，列出已有项目。”应发现 23 个工具及 manifest 资源；真实加载验收请在记录中注明，不把配置状态当作验证结果。
+1. **发现工具**：对 WorkBuddy 说“检查创意工作台的连接状态，列出已有项目。”应发现 24 个工具及 manifest 资源；真实加载验收请在记录中注明，不把配置状态当作验证结果。
 2. **无额外密钥的文字闭环**：“新建 WB加载测试小说，主题是西关修伞人的一天。写创意、文化依据、一个短篇并保存，导出 TXT 和 Markdown。”核对 project_list 可找到、重新读取正文一致、文件真实存在。可在 Web 查看同一项目。
 3. **无额外密钥的网站任务交接**：“新建 WB加载测试网站，准备岭南作品网站的生成任务，再用当前编程能力完整实现并交付源码。”应通过 prompt_prepare 与 website 任务获得真实提示词／素材包，再由当前 agent 实现。不能用 website-build 的旧模板替代，也不能把任务包称为已生成网站。
 4. **图像**：“为测试项目添加一个葵扇概念对象并生成图片。”WorkBuddy 应读取本次 handoff 的输入，用其实际生图能力写回 PNG，查询成功再采用。再要求局部修改，核对读取的是原图。没有生图能力时应明确说明，不能出现占位图或自发消息循环。
@@ -78,4 +79,13 @@ MCP 第一次调用工具会检查共享 Runtime。默认使用 `http://127.0.0.
 
 ## 连续创作验收
 
-两项 Skills 版本 0.5.0，共 23 工具／核心协议 6。按 [连续创作说明](CONTINUOUS_WORKFLOW.md) 继续验证：类型切换后返回原稿、对象建议选择采用、正文设定往返、多图首帧→实际视频输入、源码 ZIP 导入→采用→下一轮读取同一版代码、3D 前期真实图片资料包。以上每条均区分本地接口验证与 WorkBuddy 实际执行。
+两项 Skills 版本 0.5.1，共 24 工具／核心协议 7。按 [连续创作说明](CONTINUOUS_WORKFLOW.md) 继续验证：类型切换后返回原稿、对象建议选择采用、正文设定往返、多图首帧→实际视频输入、源码 ZIP 导入→采用→下一轮读取同一版代码、3D 前期真实图片资料包。以上每条均区分本地接口验证与 WorkBuddy 实际执行。
+
+
+## 接续网页原任务
+
+收到网页已有图片任务 ID 或 request.json，先 task_get 原 ID；不要 task_start 另建任务。读取 handoffContract 中原项目、对象与最终 output，生成完直接写入原目录，或 task_complete_handoff({taskId,filename}) / task_complete_handoff({taskId,assetId}) 二选一。filename 仅为原项目 inbox 中的 PNG 简单文件名，assetId 仅为原项目明确对应的图片。随后查询同一 taskId 直到 succeeded；需要采用时读取最新项目版本再 task_adopt 原 ID。
+
+完成接口以任务 ID 和实际图片内容幂等，不创建任务、不修改项目，无需新 requestId 或 expectedVersion；不同已有结果不会被覆盖。它只交回文件，正常 Runtime 导入器仍负责解码、来源记录和成功状态。图片已入库、页面刷新或切换步骤不能替代缺失的原结果文件。网页等待卡片提供“图片已生成，但这里仍在等待？”补交入口。
+
+旧任务无需重新创建；重启新版 Runtime 后，查询时会返回新的接续提示。详见[原任务交接修复](HANDOFF_CONTINUATION_2026-09-10.md)。

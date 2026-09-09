@@ -3,11 +3,13 @@ name: creativity-media
 description: 通过创意工作台 MCP 整理概念图与单镜头提示词、交接实际媒体，或获取网站生成任务与素材并由当前 agent 完整实现网站；保留旧视频合成与网站文件。
 description_zh: 在 WorkBuddy 对话中完成概念图、单镜头视频和网站生成任务交接。
 description_en: Prepare project prompts and media handoffs, generate single shots, and implement websites from Workbench request bundles using the current agent.
-version: 0.5.0
+version: 0.5.1
 author: CreativityWorkbench
 ---
 
 # 创意工作台：多媒体交付
+
+**收到网页已有任务 ID、request.json 或交接请求时，先 task_get 原 ID，接续原任务。** 不从下面的新建流程起步，不调用 task_start 另建任务，不用 media_import 代替完成交接。此场景先读 [已有任务交接](references/existing-handoff.md)，再执行对应媒体操作。
 
 先用 `workbench_status` 检查连接，再用 `project_list` / `project_get` 获取用户项目与最新版本。用户未指定具体项目且存在多个候选时，先确定项目。正文与规划可由 WorkBuddy 在当前对话生成，再 `project_update` 保存，不要求配置额外文字 API。
 
@@ -41,4 +43,4 @@ author: CreativityWorkbench
 
 ## 验收与传参兼容
 
-本版要求核心协议 6、23 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+本版要求核心协议 7、24 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
