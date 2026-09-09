@@ -13,7 +13,7 @@ export function CapabilityCards({ onCreate }: { onCreate: (type: WorkType) => vo
       <span className="capability-icon"><Icon name={workIcons[type]} size={23}/></span><span className="capability-heading"><strong>{WORK_GUIDES[type].title}</strong>{type === 'craft' && <small>仅前期设计</small>}</span>
       <span className="capability-description">{WORK_GUIDES[type].description}</span><span className="capability-output">{WORK_GUIDES[type].output}</span><span className="capability-start">开始{type === 'craft' ? '整理设计' : type === 'novel' ? '写故事' : type === 'video' ? '做视频' : '做网站'} <Icon name="arrow" size={16}/></span>
     </button>)}</div>
-    <p className="shared-capabilities">每类作品都可使用：创意完善 · 内容修改 · 美术方案 · 图像生成与原图修改 · 素材保存与下载</p>
+    <p className="shared-capabilities">每类作品都可使用：岭南文化资料 · 创意完善 · 内容修改 · 美术方案 · 图像生成与原图修改 · 素材保存与下载</p>
   </section>;
 }
 
@@ -45,6 +45,7 @@ export function WorkflowHelp({ initialType = 'novel', project, notice, onSetting
       ['保存与下载', '最后一步查看成果并下载。网站需要交给 WorkBuddy 完成制作，再导入源码 ZIP。'],
     ].map(([title, detail], i) => <li key={title}><span>{i + 1}</span><div><h4>{title}</h4><p>{detail}</p></div></li>)}</ol>
     <Button variant="secondary" onClick={onSettings}>打开生成服务设置</Button>
+    <h3>从哪里找文化依据</h3><p>在“确定创意”点击“选择文化资料”，按元素或地域筛选、查看出处并勾选。选中的事实会进入后续生成；自己的时代背景、人物与虚构设定继续写在“当前项目的文化语境”。可下载本次文化依据，网站任务包也会附上资料。WorkBuddy 对话可直接请求搜索并选用相关条目。</p>
     <details className="help-workbuddy"><summary>也可以在 WorkBuddy 对话中操作</summary><p>先导入本项目 Skills 并连接 MCP，再把下面这段话发给 WorkBuddy。它会读取并保存同一项目，回到网页即可查看成果。</p><p className="muted">对话文字创作使用 WorkBuddy 当前模型，无需额外文字密钥。图片和视频取决于已接入的实际服务。</p><textarea readOnly rows={6} aria-label="发给 WorkBuddy 的操作说明" value={request}/><Button icon="copy" onClick={() => void navigator.clipboard.writeText(request).then(() => notice('已复制，请粘贴到已连接创意工作台的 WorkBuddy 对话')).catch(() => notice('复制失败，请选中文字后复制。'))}>复制给 WorkBuddy</Button><p className="muted">首次使用需在 WorkBuddy 中加载本项目的两项技能与连接配置，再粘贴上面的操作说明。</p></details>
   </div>;
 }

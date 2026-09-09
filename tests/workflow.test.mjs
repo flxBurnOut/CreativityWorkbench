@@ -35,7 +35,7 @@ async function setup(t,type='novel',fetchImpl=async()=>{throw Error('No external
   const until=async(id,status='succeeded')=>{for(let i=0;i<300;i++){const task=await tasks.get(id);if(task.status===status)return task;if(['failed','uncertain'].includes(task.status))throw Error(JSON.stringify(task));await new Promise(r=>setTimeout(r,10));}throw Error('task timeout');};
   const run=async(kind,args={},status='succeeded')=>{const current=await get();const task=await tasks.submit({id:uid(),projectId:p.id,kind,args,source:taskSource(current,kind,args)});return until(task.id,status);};
   const adopt=async(task,selection)=>save(applyTaskResult(await get(),task,selection));
-  t.after(async()=>{tasks.stop();await rm(directory,{recursive:true,force:true,maxRetries:10,retryDelay:30});});
+  t.after(async()=>{await tasks.stop();await rm(directory,{recursive:true,force:true,maxRetries:10,retryDelay:30});});
   return {p,repo,tasks,core,get,save,run,adopt,until,directory};
 }
 test('type branches retain existing outputs and isolate art, objects, requests and explicit transfer across restart',async t=>{

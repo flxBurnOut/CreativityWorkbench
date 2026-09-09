@@ -1,4 +1,5 @@
 'use client';
+import { knowledgeText } from '../../lib/workbench/knowledge.mjs';
 
 import { useEffect, useRef, useState } from 'react';
 import { Button, Field } from '@/components/workbench/ui';
@@ -10,7 +11,7 @@ type Result = { title: string; brief: string; culture: string; model: string };
 function record(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === 'object'; }
 function validResult(value: unknown): value is Result { return record(value) && ['title', 'brief', 'culture', 'model'].every(key => typeof value[key] === 'string'); }
 export type CreativeControls = { run: (action: CreativeAction) => void; busy: boolean };
-function fingerprint(p: Project) { return JSON.stringify([p.id, p.type, p.idea, p.brief, p.culture, p.requests[0], p.title]); }
+function fingerprint(p: Project) { return JSON.stringify([p.id, p.type, p.idea, p.brief, p.culture, knowledgeText(p), p.requests[0], p.title]); }
 
 export function useCreativeGeneration(project: Project | null, demo: boolean, edit: EditProject, notice: Notice) {
   const [busy, setBusy] = useState(false);
@@ -36,7 +37,7 @@ export function useCreativeGeneration(project: Project | null, demo: boolean, ed
     try {
       const response = await fetch('/api/workbench/creative', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: request.signal,
-        body: JSON.stringify({ action, type: project.type, idea: project.idea, brief: project.brief, culture: project.culture, instruction: project.requests[0] }),
+        body: JSON.stringify({ action, type: project.type, idea: project.idea, brief: project.brief, culture: project.culture, themeKnowledge:knowledgeText(project), instruction: project.requests[0] }),
       });
       const output = await response.json();
       if (!response.ok) throw new Error(record(output) && typeof output.error === 'string' ? output.error : '创意生成未完成，请重试。');

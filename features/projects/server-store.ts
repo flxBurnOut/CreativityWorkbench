@@ -3,12 +3,18 @@ import { emptyWorkspace, parseStoredWorkspace, type ImageAsset, type Workspace, 
 import { projectOutputIds, outputId } from '../../lib/workbench/output-contract.mjs';
 
 const uploaded = new WeakMap<Blob, string>();
+export class WorkbenchApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) { super(message); this.status = status; this.code = code; }
+}
 export async function api<T = Record<string,unknown>>(path: string, method = 'GET', input?: unknown):Promise<T> {
   const options = method === 'GET' ? {} : { headers: { 'Content-Type': 'application/json' }, body: input === undefined ? undefined : JSON.stringify(input) };
   const response = await fetch('/api/workbench/data/' + path, { method, cache: 'no-store', ...options, signal: AbortSignal.timeout(30000) });
-  const data = await response.json();
-  const error = (data as {error?:unknown})?.error;
-  if (!response.ok) throw new Error(typeof error === 'string' ? error : '服务未完成请求。');
+  let data: unknown;
+  try { data = await response.json(); } catch { throw new WorkbenchApiError('服务返回了无法读取的响应，请检查服务连接后重试。', response.status); }
+  const { error, code } = (data ?? {}) as {error?:unknown;code?:unknown};
+  if (!response.ok) throw new WorkbenchApiError(typeof error === 'string' ? error : '服务未完成请求。', response.status, typeof code === 'string' ? code : undefined);
   return data as T;
 }
 export const imageUrl = (asset: ImageAsset) => asset.fileId ? '/api/workbench/data/media/' + asset.fileId : asset.demoSrc || '';
@@ -47,6 +53,9 @@ export async function saveServerWorkspace(workspace: Workspace, expectedRevision
   if (!Number.isSafeInteger(data.revision)) throw new Error('保存结果无法确认，请保留当前页面。');
   onSerialized?.({...wire,projects:wire.projects.map(p=>({...p,flow:data.flows?.find(f=>f.id===p.id)?.flow||p.flow,assets:data.flows?.find(f=>f.id===p.id)?.assets||p.assets}))});
   return data.revision;
+}
+export async function readServerWorkspace() {
+  return parseStoredWorkspace(await api<{version:1;revision:number;workspace:Workspace}>('workspace'));
 }
 export async function loadServerWorkspace(): Promise<{ workspace: Workspace; revision: number; note: string }> {
   const data = await api<{version:1;revision:number;workspace:Workspace}>('workspace');

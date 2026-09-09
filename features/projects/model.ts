@@ -1,4 +1,5 @@
 import { createProject } from '../../lib/workbench/project-core.mjs';
+import { validateKnowledge } from '../../lib/workbench/knowledge.mjs';
 export { createProject };
 import { validateVideo, validateWebsite, validateWebsitePrompt } from '../../lib/workbench/output-contract.mjs';
 import { switchWorkType, validateFlowState, projectForType, BRANCH_FIELDS } from '../../lib/workbench/workflow.mjs';
@@ -38,6 +39,7 @@ export interface Concept {
 export interface Project {
   id: string; title: string; type: WorkType; createdAt: number; updatedAt: number; stage: number;
   idea: string; brief: string; culture: string;
+  knowledge?: {id:string;version:string}[];
   content: Record<WorkType, Record<string, string>>;
   art: { direction: string; material: string; palette: string; constraints: string; fullPrompt: string };
   requests: string[]; references: StyleReference[]; assets: ImageAsset[]; concepts: Concept[];
@@ -107,6 +109,7 @@ export function parseStoredWorkspace(value: unknown): StoredWorkspace {
   for (const p of ws.projects as unknown[]) {
     if (!record(p) || typeof p.id !== 'string' || ids.has(p.id) || typeof p.title !== 'string' || !WORK_TYPES.includes(p.type as WorkType) || !Number.isInteger(p.stage) || Number(p.stage) < 0 || Number(p.stage) > 4 || !Number.isFinite(p.createdAt) || !Number.isFinite(p.updatedAt) || !['idea', 'brief', 'culture'].every(key => typeof p[key] === 'string') || typeof p.manualCover !== 'boolean' || typeof p.upstreamChanged !== 'boolean' || !optionalString(p.coverAssetId)) throw new Error('有项目数据无法读取，未覆盖原有草稿。');
     ids.add(p.id);
+    validateKnowledge(p.knowledge);
     if(p.video)validateVideo(p.video);
     if(p.website)validateWebsite(p.website);
     if(p.websiteRequest)validateWebsitePrompt(p.websiteRequest);

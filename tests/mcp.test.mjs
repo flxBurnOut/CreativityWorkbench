@@ -55,6 +55,18 @@ async function setup(t) {
 const site = () => ({ title: '岭南手艺', description: '用户提供的资料', accent: '#35765d', theme: 'paper', pages: [{ id: 'home', title: '首页', intro: '骑楼下', sections: [{ kind: 'text', title: '说明', body: '真实保存的文案', items: [] }] }], limitations: [] });
 const video = () => ({ ratio: '16:9', burnSubtitles: false, keepAudio: false, shots: [{ id: 'shot-a', title: '街巷', visual: '日光移动', camera: '推进', duration: 2, narration: '街巷', subtitle: '街巷', revision: '' }] });
 
+test('real stdio client: selects sourced knowledge and delivers it without provider credentials',async t=>{
+  const {call}=await setup(t);
+  const found=await call('knowledge_search',{query:'木雕',region:'潮汕'});
+  assert.equal(found.entries[0].id,'chaozhou-wood');
+  const p=await call('project_create',{requestId:uid(),idea:'木雕主题网站',type:'website'});
+  const input={requestId:uid(),projectId:p.projectId,expectedVersion:p.projectVersion,entryIds:['chaozhou-wood']};
+  await call('knowledge_apply',input);assert.equal((await call('knowledge_apply',input)).replayed,true);
+  const current=await call('project_get',{projectId:p.projectId});assert.match(current.knowledgeContext,/14020/);
+  const prepared=await call('prompt_prepare',{projectId:p.projectId,kind:'website'});assert.match(prepared.prompt,/潮州木雕/);
+  const delivery=await call('project_deliver',{projectId:p.projectId});assert.match(await readFile(delivery.files.find(f=>f.role==='theme-knowledge').path,'utf8'),/潮州木雕/);
+});
+
 test('real stdio client: discovery, conversation writing, durable retries, version conflicts and website delivery without API keys', async t => {
   const { client, call, until, connect, url } = await setup(t);
   const tools = await client.listTools();

@@ -623,3 +623,22 @@ a { color:var(--green); }
  .step-guide .eyebrow { display:none; }
  .delivery-route button { padding:10px 13px; min-height:44px; }
 }
+
+.workspace-sync-note { max-width:1096px; margin:12px auto; padding:10px 16px; border:1px solid var(--line); background:var(--sage); border-radius:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; }
+
+/* Cultural knowledge is part of the creation flow, with readable provenance. */
+.knowledge-panel .section-heading { flex-wrap: wrap; gap: 16px; }
+.knowledge-panel .section-heading p { max-width: 620px; }
+.knowledge-selected { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 20px; }
+.knowledge-selected button { background: transparent; border: 0; cursor: pointer; color: inherit; margin-left: 8px; padding: 3px 6px; }
+.knowledge-filters { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.knowledge-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin: 16px 0; }
+.knowledge-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; font-size: 14px; line-height: 1.75; background: var(--paper); }
+.knowledge-choice { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.knowledge-choice input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 4px; accent-color: #386755; }
+.knowledge-card ul { padding-left: 20px; }
+.knowledge-card summary { cursor: pointer; color: #386755; }
+.knowledge-card h4 { margin: 12px 0 6px; }
+.knowledge-card a { text-decoration: underline; overflow-wrap: anywhere; }
+.knowledge-context { font: inherit; font-size: 13px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 400px; overflow: auto; }
+@media (max-width: 640px) { .knowledge-grid,.knowledge-filters { grid-template-columns: 1fr; } }

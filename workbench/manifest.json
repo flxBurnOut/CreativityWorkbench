@@ -123,6 +123,8 @@
       "entrypoint": "scripts/workbench-mcp.mjs",
       "runtimeEndpoint": "/v1/core/:tool",
       "tools": [
+        "knowledge_search",
+        "knowledge_apply",
         "workflow_get",
         "workflow_update",
         "website_source_import",
@@ -148,7 +150,9 @@
         "workbench/skills/creativity-media"
       ],
       "configuration": "npm run workbench:setup",
-      "validation": "local-stdio-and-files-tested; WorkBuddy-client-and-real-provider-not-verified"
+      "validation": "local-stdio-and-files-tested; WorkBuddy-client-and-real-provider-not-verified",
+      "protocolVersion": 5,
+      "skillVersion": "0.4.0"
     },
     {
       "id": "service-settings",
@@ -175,7 +179,7 @@
       "transport": "http",
       "endpoint": "/v1/core/workflow_get",
       "mutationEndpoint": "/v1/core/workflow_update",
-      "protocolVersion": 4,
+      "protocolVersion": 5,
       "validation": "local-workflow-and-stdio-tested; real-provider-not-verified"
     },
     {
@@ -197,6 +201,16 @@
         "design-package"
       ],
       "validation": "local-files-tested; no-3d-generation"
+    },
+    {
+      "id": "lingnan-knowledge",
+      "name": "可追溯岭南文化知识选择与生成依据",
+      "transport": "http",
+      "endpoint": "/v1/core/knowledge_search",
+      "mutationEndpoint": "/v1/core/knowledge_apply",
+      "version": "2026-09-09.1",
+      "entryCount": 10,
+      "validation": "sources-reviewed; local-reference-and-generation-input-tested; generated-cultural-quality-not-verified"
     }
   ],
   "editorModules": []

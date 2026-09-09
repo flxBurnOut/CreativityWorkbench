@@ -11,6 +11,7 @@ import { imageUrl } from '@/features/projects/server-store';
 import { VideoOutput, WebsiteOutput } from './delivery-stages';
 import {ObjectBindings,NovelReferences,DesignDelivery,InputSummary} from './workflow-panel';
 import { FLOW_LABELS, nextStage, optionalStage } from './flow-guide';
+import { KnowledgePanel } from './knowledge-panel';
 
 export type Notice = (message: string, undo?: () => void) => void;
 export type EditProject = (update: (project: Project) => Project) => void;
@@ -44,7 +45,7 @@ export function CreativeStage({ project, edit, creative, demo }: StageProps) {
       <details className="creative-current" open={hasBrief||undefined}><summary>{hasBrief?'当前创意方案 · '+project.brief.length+' 字':'已有方案？直接填写或粘贴'}</summary><textarea aria-label="当前创意方案" className="document-editor" rows={6} value={project.brief} placeholder="写清要创作什么、面向谁，以及一定要保留的内容。" onChange={event=>changeUpstream(edit,p=>({...p,brief:event.target.value}))}/></details>
       {hasBrief&&<details className="creative-current"><summary>提出修改要求</summary><Field label="创意方案修改要求"><textarea rows={2} value={project.requests[0]} placeholder="例如：保留人物关系，把主题改成邻里互助。" onChange={event=>edit(p=>({...p,requests:p.requests.map((value,i)=>i===0?event.target.value:value)}))}/></Field><Button variant="secondary" disabled={creative?.busy||!project.requests[0].trim()} onClick={()=>creative?.run('revise')}>生成修改建议</Button></details>}
     </section>
-    <details className="surface quiet-details"><summary><span><Icon name="leaf"/>岭南文化依据</span><Icon name="chevron"/></summary><Field label="当前项目的文化语境" hint="记录已确定的地域、时代和参考，区分事实与虚构。"><textarea rows={3} value={project.culture} placeholder="例如：当代广府街区的虚构故事；建筑与生活细节待补充参考……" onChange={event=>changeUpstream(edit,p=>({...p,culture:event.target.value}))}/></Field></details>
+    <KnowledgePanel project={project} edit={edit}/>
   </div>;
 }
 

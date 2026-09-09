@@ -27,7 +27,7 @@ async function setup(t,type='video',options={}) {
   if(type==='video')p.video={ratio:'16:9',shots:[shot()],burnSubtitles:false,keepAudio:false};
   await repo.saveWorkspace(ws(p),0,uid());
   const tasks=createTaskManager(repo,{env:{},...options});const core=createCoreService(repo,tasks,{env:{},...options});
-  t.after(async()=>{tasks.stop();await rm(directory,{recursive:true,force:true});});
+  t.after(async()=>{await tasks.stop();await rm(directory,{recursive:true,force:true});});
   return {p,repo,tasks,core,directory};
 }
 async function until(tasks,id,status='succeeded') {

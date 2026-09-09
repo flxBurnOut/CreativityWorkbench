@@ -23,7 +23,7 @@ async function setup(t, env = {}, fetchImpl = async () => response(art)) {
   const repo = createRepository(directory);
   const tasks = createTaskManager(repo, { env, fetchImpl });
   const core = createCoreService(repo, tasks, { env, fetchImpl });
-  t.after(async () => { tasks.stop(); await rm(directory, { recursive: true, force: true }); });
+  t.after(async () => { await tasks.stop(); await rm(directory, { recursive: true, force: true }); });
   return { repo, tasks, core, directory };
 }
 async function until(tasks, id, status) {
