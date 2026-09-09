@@ -3,6 +3,7 @@ export { applyTaskResult } from '../../lib/workbench/project-core.mjs';
 export interface GenerationTask {
   id:string; projectId:string; kind:string; args:Record<string,unknown>; source:string;
   status:'queued'|'running'|'waiting_external'|'waiting_provider'|'uncertain'|'succeeded'|'failed'|'cancelled';
-  recoveredAfterCancel?:boolean; createdAt:number; dismissed:boolean; error?:string; note?:string; handoffMessage?:string; dispatch?:string; targetName?:string;
-  result?: { warnings?:string[]; title?:string;brief?:string;culture?:string;sections?:Record<string,string>;replacement?:string;notes?:string;art?:Project['art'];objects?:Pick<Concept,'id'|'category'|'name'|'description'>[];asset?:ImageAsset;novel?:Project['novel'];videoPlan?:VideoDraft;videoClip?:MediaFile;videoAudio?:MediaFile;videoFinal?:VideoDraft['final'];website?:WebsiteDraft };
+  recoveredAfterCancel?:boolean; createdAt:number; dismissed:boolean; error?:string; note?:string; handoffMessage?:string; dispatch?:string; targetName?:string; promptVersion?:string; submittedPrompt?:string|{role:string;content:string}[];
+  workType?:string;inputManifest?:{key:string;label:string;value:unknown;fingerprint:string;role:string}[];
+  result?: { warnings?:string[]; title?:string;brief?:string;culture?:string;sections?:Record<string,string>;replacement?:string;notes?:string;art?:Project['art'];objects?:(Pick<Concept,'id'|'category'|'name'|'description'> & Partial<Concept>)[];asset?:ImageAsset;novel?:Project['novel'];videoPlan?:VideoDraft;videoClip?:MediaFile;videoAudio?:MediaFile;videoFinal?:VideoDraft['final'];website?:WebsiteDraft;websiteRequest?:Project['websiteRequest'];designPackage?:Project['designPackage'] };
 }

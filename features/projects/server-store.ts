@@ -41,10 +41,11 @@ export async function serializeWorkspace(workspace: Workspace): Promise<Workspac
   for (const p of workspace.projects) projects.push({ ...p, assets: await Promise.all(p.assets.map(serializeAsset)) });
   return { ...workspace, projects };
 }
-export async function saveServerWorkspace(workspace: Workspace, expectedRevision: number, writeId: string): Promise<number> {
+export async function saveServerWorkspace(workspace: Workspace, expectedRevision: number, writeId: string, onSerialized?:(wire:Workspace)=>void): Promise<number> {
   const wire = await serializeWorkspace(workspace);
-  const data = await api<{revision:number}>('workspace', 'PUT', { workspace: wire, expectedRevision, writeId });
+  const data = await api<{revision:number;flows?:{id:string;flow:Workspace['projects'][number]['flow'];assets:ImageAsset[]}[]}>('workspace', 'PUT', { workspace: wire, expectedRevision, writeId });
   if (!Number.isSafeInteger(data.revision)) throw new Error('保存结果无法确认，请保留当前页面。');
+  onSerialized?.({...wire,projects:wire.projects.map(p=>({...p,flow:data.flows?.find(f=>f.id===p.id)?.flow||p.flow,assets:data.flows?.find(f=>f.id===p.id)?.assets||p.assets}))});
   return data.revision;
 }
 export async function loadServerWorkspace(): Promise<{ workspace: Workspace; revision: number; note: string }> {

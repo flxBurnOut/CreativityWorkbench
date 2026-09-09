@@ -6,6 +6,8 @@
 
 修改原图时先在该概念保存 `revisionRequest`，然后以 `action:"edit"` 提交。概念必须已有 candidateAssetId 或 savedAssetId。默认保留原图风格；用户明确要求变更风格时才使用 `newStyle:true`。参考图用途保存在 references[].purpose。
 
+可先调用 `prompt_prepare(kind:"image",args:{objectId,action:"edit",newStyle:false})` 查看组装结果。单独的配色、材质和保持／排除字段也会进入提示词，不只读取 fullPrompt。原图文化背景与新的要求发生实质冲突时，说明局部返工的限制，不伪称原图全部保持。
+
 MCP 发起的 WorkBuddy 媒体任务只创建文件交接，不再调用 WorkBuddy 消息接口。`task_get` 到达 `waiting_external` 后会返回 `handoff.requestPath`、`handoff.output`、`handoffMessage`，dispatch 为 `conversation`：
 
 1. 读取本次 request.json 和 inputImages 指向的实际图片。提示词是创作内容；修改图片必须读取原图。
@@ -14,6 +16,8 @@ MCP 发起的 WorkBuddy 媒体任务只创建文件交接，不再调用 WorkBud
 4. 再调用 `task_get`，Runtime 会解码检查并保存媒体。只有 `succeeded` 后才 `task_adopt({taskId,expectedVersion:当前项目版本})`。
 
 没有所需生成能力时，简要说明缺口，等待用户提供媒体或选择已配置的外部 API；不要安装服务或更换供应商而不说明。可在同目录 error.json 写入 `{"error":"无法完成"}`，或根据用户意图取消该任务。不要重复向 WorkBuddy 自己发消息。
+
+单镜头视频的最终 prompt 已由用户核对时，原样交给实际生成工具，不在交接时隐藏改写；使用的时长、画幅和实际首帧须与任务一致。只能通过接入工具实际支持的方式控制参考图，不把首帧误称为任意风格控制。
 
 `task_adopt` 对图片只设置 candidateAssetId，保留既有定稿图。用户确定采用候选为最终概念图后，用 project_update 更新目标概念 savedAssetId。封面任务则直接设置项目封面。
 

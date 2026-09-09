@@ -42,7 +42,8 @@
       "method": "POST",
       "kinds": [
         "image",
-        "cover"
+        "cover",
+        "video-frame"
       ],
       "providers": [
         "workbuddy",
@@ -67,7 +68,7 @@
     },
     {
       "id": "video-generation-task",
-      "name": "视频分镜、镜头、旁白与自动合成",
+      "name": "单镜头视频提示词与生成；保留原分镜、旁白与合成",
       "transport": "http",
       "endpoint": "/v1/tasks",
       "method": "POST",
@@ -87,7 +88,7 @@
     },
     {
       "id": "website-generation-task",
-      "name": "静态网站生成、修改与打包",
+      "name": "网站生成提示词与素材包；旧模板重建兼容",
       "transport": "http",
       "endpoint": "/v1/tasks",
       "method": "POST",
@@ -96,10 +97,11 @@
         "website-build"
       ],
       "providers": [
-        "deepseek",
-        "local-static-compiler"
+        "local-prompt-harness",
+        "workbuddy-handoff",
+        "legacy-static-compiler"
       ],
-      "validation": "local-mock-only"
+      "validation": "local-prompt-and-files-tested; external-agent-website-not-verified"
     },
     {
       "id": "delivery-files",
@@ -116,11 +118,15 @@
     },
     {
       "id": "workbuddy-core-mcp",
-      "name": "WorkBuddy 核心对话创作与交付",
+      "name": "外部 agent 项目、提示词与媒体交接",
       "transport": "stdio-mcp",
       "entrypoint": "scripts/workbench-mcp.mjs",
       "runtimeEndpoint": "/v1/core/:tool",
       "tools": [
+        "workflow_get",
+        "workflow_update",
+        "website_source_import",
+        "prompt_prepare",
         "workbench_status",
         "project_list",
         "project_get",
@@ -162,6 +168,35 @@
       "endpoint": "/v1/recovery",
       "method": "POST",
       "validation": "local-tested; explicit-recovery-token-required"
+    },
+    {
+      "id": "continuous-workflow",
+      "name": "全类型成果依据、历史恢复与显式继承",
+      "transport": "http",
+      "endpoint": "/v1/core/workflow_get",
+      "mutationEndpoint": "/v1/core/workflow_update",
+      "protocolVersion": 4,
+      "validation": "local-workflow-and-stdio-tested; real-provider-not-verified"
+    },
+    {
+      "id": "website-source",
+      "name": "真实网站源码候选、采用与静态隔离预览",
+      "transport": "http",
+      "endpoint": "/v1/files/website-source",
+      "method": "POST",
+      "previewEndpoint": "/v1/source-preview/:fileId/:path",
+      "validation": "local-zip-and-http-tested; external-agent-build-not-verified"
+    },
+    {
+      "id": "design-package",
+      "name": "3D 前期与跨媒介设计资料包",
+      "transport": "http",
+      "endpoint": "/v1/tasks",
+      "method": "POST",
+      "kinds": [
+        "design-package"
+      ],
+      "validation": "local-files-tested; no-3d-generation"
     }
   ],
   "editorModules": []

@@ -3,6 +3,7 @@ import { mkdir, readFile, readdir, writeFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { zipSync } from 'fflate';
+import { skillCreativeRules } from '../lib/workbench/prompts.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = join(root, 'work', 'workbuddy-core');
@@ -10,6 +11,10 @@ const skills = join(root, 'workbench', 'skills');
 await mkdir(output, { recursive: true });
 const names = (await readdir(skills)).sort();
 for (const name of names) {
+  // Both installable Skills receive the same maintained policy as Runtime prompts.
+  await mkdir(join(skills,name,'references'),{recursive:true});
+  await writeFile(join(skills,name,'references','creative-rules.md'),skillCreativeRules());
+  if(name!=='creativity-project')await writeFile(join(skills,name,'references','continuous-workflow.md'),await readFile(join(skills,'creativity-project','references','continuous-workflow.md')));
   const files = {};
   async function collect(directory) {
     for (const item of await readdir(directory)) {

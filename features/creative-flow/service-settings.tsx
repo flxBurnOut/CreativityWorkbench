@@ -5,7 +5,7 @@ import { api } from '@/features/projects/server-store';
 
 type Settings = { secrets: Record<string, boolean>; values: Record<string, string> };
 const services = [
-  { title: '文字与网站', detail: 'DeepSeek V4 Flash · 创意、正文与网站生成', key: 'DEEPSEEK_API_KEY' },
+  { title: '文字生成', detail: 'DeepSeek V4 Flash · 创意、内容、美术提示词与短篇正文', key: 'DEEPSEEK_API_KEY' },
   { title: '图像生成', detail: '兼容 Images API 的外部服务', key: 'IMAGE_API_KEY', provider: 'WORKBENCH_IMAGE_PROVIDER', base: 'IMAGE_API_BASE_URL', model: 'IMAGE_API_MODEL' },
   { title: '视频生成', detail: 'Runway Gen-4.5', key: 'VIDEO_API_KEY', provider: 'VIDEO_PROVIDER', base: 'VIDEO_API_BASE_URL' },
   { title: 'WorkBuddy', detail: '本地助理自动发送授权；手动交接无需填写', key: 'WORKBUDDY_ACCESS_TOKEN' },
