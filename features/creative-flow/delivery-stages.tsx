@@ -68,9 +68,12 @@ export function VideoOutput({project,edit,generation,notice}:Props) {
       const frameChanges=assetChanges(project,frame);
       return <article className="shot-editor" key={s.id}>
         <div className="section-heading"><h4>{s.title||'镜头 '+(i+1)}</h4>{video.shots.length>0&&<Button variant="ghost" onClick={()=>{const old=video;update(v=>({...v,shots:v.shots.filter(x=>x.id!==s.id)}));notice('已移除镜头，文件仍保留在任务历史',()=>update(()=>old));}}>移除镜头</Button>}</div>
+        <Field label={'单镜头要求 · '+(i+1)}><textarea rows={4} value={s.visual} placeholder={reference?'这张图中的主体如何运动，环境和镜头如何变化？':'这个镜头里，谁在什么环境中做什么？只描述本镜头需要发生的动作。'} onChange={e=>shotEdit(s.id,current=>({...current,visual:e.target.value}))}/></Field>
+        <details className="video-reference-options"><summary>选一张首帧图片（可选）{reference?' · 已选择 '+reference.name:''}</summary>
         <ReferencePicker project={project} selected={s.referenceAssetId?[s.referenceAssetId]:[]} onSelect={ids=>shotEdit(s.id,current=>({...current,referenceAssetId:ids[0],referenceConceptId:project.concepts.find(c=>c.savedAssetId===ids[0])?.id,conceptIds:[...new Set([...(current.conceptIds||[]),...project.concepts.filter(c=>c.savedAssetId===ids[0]).map(c=>c.id)])]}))} label="上一阶段概念图 · 选一张作为本镜头首帧"/>
         <div className="inline-actions"><Button variant="ghost" onClick={()=>edit(p=>({...p,stage:3}))}>返回概念图阶段</Button><Button variant="ghost" onClick={()=>shotEdit(s.id,current=>({...current,referenceAssetId:undefined,referenceConceptId:undefined}))}>仅文字生成</Button></div>
-        <Field label={'单镜头要求 · '+(i+1)}><textarea rows={4} value={s.visual} placeholder={reference?'这张图中的主体如何运动，环境和镜头如何变化？':'这个镜头里，谁在什么环境中做什么？只描述本镜头需要发生的动作。'} onChange={e=>shotEdit(s.id,current=>({...current,visual:e.target.value}))}/></Field>
+        </details>
+
         <div className="delivery-fields">
           <Field label={'镜头 '+(i+1)+' 秒数'}><input type="number" min={2} max={10} value={s.duration} onChange={e=>shotEdit(s.id,current=>({...current,duration:Math.min(10,Math.max(2,Math.round(Number(e.target.value)||2)))}))}/></Field>
           <p className="muted">实际输入：{reference?reference.name+' · 起始画面':'未附图片 · 文生视频'}</p>
@@ -139,31 +142,27 @@ export function WebsiteOutput({project,edit,generation,notice}:Props) {
     return p.websiteRequest?draft:{...draft,websiteRequest:{...draft.websiteRequest,prompt:buildWebsitePrompt(draft),basis:websitePromptBasis(draft)}};
   });
   return <div className="stage-stack">
-    <section className="surface"><div className="section-heading"><div><h3>准备网站生成任务</h3><p>汇入创意、文化背景、美术要求和素材。模型或外部 agent 负责完整的网站内容、设计、代码与交互。</p></div><span className="tag tag-soft">网站</span></div>
-      <Field label="网站生成要求"><textarea rows={4} value={project.delivery.notes} placeholder="说明网站面向谁、需要哪些内容与实际功能，以及交付要求。" onChange={e=>edit(p=>({...p,delivery:{...p.delivery,notes:e.target.value}}))}/></Field>
-      <Field label="本次网站修改要求"><textarea rows={2} value={project.requests[4]} placeholder="修改已有网站时写下需要改变的部分，其余内容保持。" onChange={e=>edit(p=>({...p,requests:p.requests.map((v,i)=>i===4?e.target.value:v)}))}/></Field>
+    <ol className="delivery-route" aria-label="网站制作的三个步骤">
+      <li className={!request?.bundleFileId?'is-active':''}><button type="button" onClick={()=>document.getElementById('website-step-1')?.scrollIntoView({behavior:'smooth',block:'start'})}><strong>1. 准备需求</strong><span>确认内容与素材</span></button></li>
+      <li className={request?.bundleFileId&&!project.websiteSource?'is-active':''}><button type="button" onClick={()=>document.getElementById('website-step-2')?.scrollIntoView({behavior:'smooth',block:'start'})}><strong>2. WorkBuddy 制作</strong><span>生成真正的网站源码</span></button></li>
+      <li className={project.websiteSource?'is-active':''}><button type="button" onClick={()=>document.getElementById('website-step-3')?.scrollIntoView({behavior:'smooth',block:'start'})}><strong>3. 导入与预览</strong><span>采用源码，继续修改</span></button></li>
+    </ol>
+    <section className="surface website-preparation" id="website-step-1"><div className="section-heading"><div><h3>1. 确认网站需求</h3><p>已有内容与画风会带入任务，只需补充这次要做什么。</p></div><span className="tag tag-soft">网站</span></div>
+      <Field label="网站生成要求"><textarea rows={4} value={project.delivery.notes} placeholder="例如：做一个岭南手作专题站，包含作品展示与文化依据，支持类别筛选。" onChange={e=>edit(p=>({...p,delivery:{...p.delivery,notes:e.target.value}}))}/></Field>
+      {(project.websiteSource||project.website||project.requests[4])&&<Field label="本次网站修改要求"><textarea rows={2} value={project.requests[4]} placeholder="写下这次需要改变的部分，其余内容保持。" onChange={e=>edit(p=>({...p,requests:p.requests.map((v,i)=>i===4?e.target.value:v)}))}/></Field>}
+      <details><summary>网站图片 · 已选择 {selected.length} 张（可选）</summary><p className="muted">默认使用已选用的概念图。风格参考不会自动作为网站内容；勾选后才允许使用。</p>
+        {project.assets.length?<div className="inline-actions">{project.assets.map(a=><label key={a.id}><input type="checkbox" checked={selected.includes(a.id)} onChange={e=>select(a.id,e.target.checked)}/>{a.name}</label>)}</div>:<p>没有图片也能制作网站。</p>}
+        {roles.some(r=>r.role==='style-reference')&&<p className="muted">仅作风格参考：{roles.filter(r=>r.role==='style-reference').map(r=>r.name+'（'+r.purpose+'）').join('；')}</p>}
+      </details>
+      <details open={stale||undefined}><summary>查看或调整完整任务说明</summary><Field label="网站最终生成提示词"><textarea rows={10} value={prompt} onChange={e=>change(e.target.value)}/></Field><p className="muted">将原样交给 WorkBuddy，并附带选定的实际素材。</p><div className="inline-actions"><Button variant="secondary" onClick={()=>change()}>按当前资料重新整理</Button><Button variant="ghost" disabled={stale||!prompt.trim()} onClick={()=>void navigator.clipboard.writeText(prompt).then(()=>notice('已复制提示词；如有图片，请同时提供实际素材包。')).catch(()=>notice('复制失败，请选中文字复制。'))}>复制提示词</Button><Button variant="ghost" disabled={stale||!prompt.trim()} onClick={()=>downloadPrompt(prompt)}>下载提示词 Markdown</Button></div></details>
+      {stale&&<div role="status"><p>资料已更新，已有编辑稿保留。请重新整理任务说明，或核对后保留。</p><div className="inline-actions"><Button variant="secondary" onClick={()=>change()}>更新任务说明</Button><Button variant="ghost" onClick={()=>change(undefined,true)}>已核对，保留编辑稿</Button></div></div>}
     </section>
-    <section className="surface"><h3>允许用于网站的图片</h3><p className="muted">默认选择已保存概念图。美术参考只影响指定方面；勾选后才允许作为网站素材使用。</p>
-      {project.assets.length?<div className="inline-actions">{project.assets.map(a=><label key={a.id}><input type="checkbox" checked={selected.includes(a.id)} onChange={e=>select(a.id,e.target.checked)}/>{a.name}</label>)}</div>:<p>没有项目图片，可交接纯文字任务。</p>}
-      {roles.some(r=>r.role==='style-reference')&&<p className="muted">仅作风格参考：{roles.filter(r=>r.role==='style-reference').map(r=>r.name+'（'+r.purpose+'）').join('；')}</p>}
+    <section className="surface" id="website-step-2"><div className="section-heading"><div><h3>2. 交给 WorkBuddy 制作网站</h3><p>先准备任务包。下方结果卡会提供交接请求；在 WorkBuddy 中完成制作后，取得网站源码 ZIP。</p></div></div>
+      <div className="inline-actions"><Button disabled={generation?.busy||stale||!prompt.trim()||prompt.length>100000} onClick={()=>generation?.run('website',{action:'generate',provider:'workbuddy'})}>准备任务并交给 WorkBuddy</Button><Button variant="secondary" disabled={generation?.busy||stale||!prompt.trim()||prompt.length>100000} onClick={()=>generation?.run('website',{action:'generate'})}>仅保存任务包</Button></div>
+      <p className="muted">有发送授权时自动交接；否则复制结果卡中的请求。任务包不是完成的网站。</p>
+      {request?.bundleFileId&&<div><p>{request.source===websiteRequestSource(project)?'任务包已保存，可以交给 WorkBuddy 执行。':'旧任务包已保留；当前资料变化后需重新准备。'}</p><DownloadFile fileId={request.bundleFileId} name="网站生成任务与素材.zip">下载任务与素材 ZIP</DownloadFile></div>}
     </section>
-    <section className="surface"><Field label="网站最终生成提示词"><textarea rows={15} value={prompt} onChange={e=>change(e.target.value)}/></Field>
-      <p className="muted">本次原样交接此文本与下方素材包。任务准备完成不代表网站已经生成。</p>
-      <Button variant="secondary" onClick={()=>change()}>按当前资料重新整理</Button>
-      {stale&&<div role="status"><p>项目资料或素材用途已变化，编辑稿仍保留。请重新整理，或核对后确认保留。</p><Button variant="secondary" onClick={()=>change(undefined,true)}>已核对，保留编辑稿</Button></div>}
-      <div className="inline-actions">
-        <Button variant="ghost" disabled={stale||!prompt.trim()} onClick={()=>void navigator.clipboard.writeText(prompt).then(()=>notice('已复制提示词；如有图片，请同时提供实际素材包。')).catch(()=>notice('复制失败，请选中文字复制。'))}>复制提示词</Button>
-        <Button variant="ghost" disabled={stale||!prompt.trim()} onClick={()=>downloadPrompt(prompt)}>下载提示词 Markdown</Button>
-        <Button disabled={generation?.busy||stale||!prompt.trim()||prompt.length>100000} onClick={()=>generation?.run('website',{action:'generate'})}>保存提示词与素材包</Button>
-        <Button variant="secondary" disabled={generation?.busy||stale||!prompt.trim()||prompt.length>100000} onClick={()=>generation?.run('website',{action:'generate',provider:'workbuddy'})}>交给 WorkBuddy</Button>
-      </div>
-      <p className="muted">有本机助理发送授权时可交给 WorkBuddy；否则提供可复制的交接请求。执行模型负责源码、运行说明和功能验证。</p>
-      {request?.bundleFileId&&<div><p>{request.source===websiteRequestSource(project)?'已采用的生成任务包':'已保留的旧任务包；当前资料或提示词已变化，请重新保存任务包。'}</p><DownloadFile fileId={request.bundleFileId} name="网站生成任务与素材.zip">下载任务与素材 ZIP</DownloadFile></div>}
-    </section>
-    {project.website&&<details className="surface"><summary>旧模板网站与交付文件</summary><p>历史成果继续保留。新任务由模型完整实现，不再套用此模板。</p>
-      {project.website.previewFileId&&<WebsitePreview fileId={project.website.previewFileId}/>}
-      {project.website.zipFileId&&<DownloadFile fileId={project.website.zipFileId} name="旧网站源码.zip">下载旧网站 ZIP</DownloadFile>}
-    </details>}
     <WebsiteSourcePanel project={project} edit={edit} notice={notice}/>
+    {project.website&&<details className="surface"><summary>旧版网站与交付文件</summary><p>历史成果继续保留，新网站通过上面的流程制作。</p>{project.website.previewFileId&&<WebsitePreview fileId={project.website.previewFileId}/>} {project.website.zipFileId&&<DownloadFile fileId={project.website.zipFileId} name="旧网站源码.zip">下载旧网站 ZIP</DownloadFile>}</details>}
   </div>;
 }
