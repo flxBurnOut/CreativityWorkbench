@@ -174,15 +174,31 @@ export function disposeModel(root) {
   for (const geometry of geometries) geometry.dispose();
 }
 
-/** No permanent animation loop: changes request at most one visible frame. */
-export function createDemandRender(render, requestFrame, cancelFrame) {
-  let frame = null, visible = true, disposed = false;
+/** One visible frame at a time; opt-in animation is capped at 30 rendered FPS. */
+export function createDemandRender(render, requestFrame, cancelFrame, advance) {
+  let frame = null, visible = true, disposed = false, animated = false, lastTime = null, epoch = 0;
+  const cancel = () => { epoch++; if (frame !== null) cancelFrame(frame); frame = null; lastTime = null; };
   const request = () => {
-    if (!disposed && visible && frame === null) frame = requestFrame(() => { frame = null; if (!disposed && visible) render(); });
+    if (!disposed && visible && frame === null) {
+      const scheduledEpoch = epoch;
+      frame = requestFrame(time => {
+        if (disposed || !visible || scheduledEpoch !== epoch) return;
+        frame = null;
+        if (animated) {
+          const now = Number.isFinite(time) ? time : 0;
+          if (lastTime !== null && now >= lastTime && now - lastTime < 1000 / 30 - 0.1) { request(); return; }
+          advance(lastTime === null ? 0 : Math.max(0, Math.min((now - lastTime) / 1000, 0.1)));
+          lastTime = now;
+        }
+        render();
+        if (animated) request();
+      });
+    }
   };
   return {
     request,
-    visible(value) { visible = value; if (!value && frame !== null) { cancelFrame(frame); frame = null; } if (value) request(); },
-    dispose() { disposed = true; if (frame !== null) cancelFrame(frame); frame = null; },
+    animate(value) { const next = Boolean(value && advance); if (next === animated || disposed) return; animated = next; cancel(); request(); },
+    visible(value) { if (visible !== value) cancel(); visible = value; if (value) request(); },
+    dispose() { disposed = true; animated = false; cancel(); },
   };
 }

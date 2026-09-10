@@ -173,3 +173,33 @@ test('preview renders only on demand and cancels pending work when hidden or unm
   demand.visible(true); assert.equal(callbacks.size, 1); callback = [...callbacks.values()][0]; demand.dispose(); assert.equal(callbacks.size, 0);
   callback(); demand.request(); assert.equal(rendered, 1); assert.equal(callbacks.size, 0);
 });
+
+test('optional model rotation has one frame loop, limits draw rate and stops when unchecked', () => {
+  let next = 0, rendered = 0; const callbacks = new Map(), deltas = [];
+  const demand = createDemandRender(() => rendered++, callback => { callbacks.set(++next, callback); return next; }, id => callbacks.delete(id), seconds => deltas.push(seconds));
+  const tick = time => { assert.equal(callbacks.size, 1); const [id, callback] = [...callbacks][0]; callbacks.delete(id); callback(time); };
+  demand.request(); tick(0); assert.equal(callbacks.size, 0); assert.equal(deltas.length, 0);
+  demand.animate(true); demand.animate(true); demand.request(); tick(1000);
+  assert.deepEqual(deltas, [0]); assert.equal(rendered, 2);
+  tick(1016); assert.equal(rendered, 2, 'high refresh rate must not redraw on every display tick');
+  tick(1034); assert.equal(rendered, 3); assert.equal(deltas[1], .034);
+  tick(4000); assert.equal(deltas[2], .1, 'a slow frame must not cause a large rotation jump');
+  demand.animate(false); tick(5000); assert.equal(callbacks.size, 0);
+  assert.equal(deltas.length, 3, 'unchecking must immediately stop moving the model');
+  demand.dispose();
+});
+
+test('hidden rotation pauses its clock and stale callbacks cannot revive a hidden or disposed viewer', () => {
+  let next = 0, rendered = 0; const callbacks = new Map(), deltas = [];
+  const demand = createDemandRender(() => rendered++, callback => { callbacks.set(++next, callback); return next; }, id => callbacks.delete(id), seconds => deltas.push(seconds));
+  const tick = time => { const [id, callback] = [...callbacks][0]; callbacks.delete(id); callback(time); };
+  demand.animate(true); tick(10); tick(50);
+  const stale = [...callbacks.values()][0];
+  demand.visible(false); assert.equal(callbacks.size, 0);
+  demand.request(); stale(100); assert.equal(callbacks.size, 0); assert.equal(rendered, 2);
+  demand.visible(true); stale(200); assert.equal(callbacks.size, 1, 'the old callback must not clear the resumed frame');
+  tick(900000); assert.equal(deltas.at(-1), 0, 'background time must not advance the model');
+  const afterUnmount = [...callbacks.values()][0]; demand.dispose();
+  afterUnmount(900100); demand.visible(true); demand.animate(true); demand.request();
+  assert.equal(callbacks.size, 0); assert.equal(rendered, 3);
+});

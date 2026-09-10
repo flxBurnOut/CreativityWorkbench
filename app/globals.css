@@ -680,6 +680,7 @@ a { color:var(--green); }
 .craft-viewer-message{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;line-height:1.8;text-align:center}
 .craft-viewer-toolbar,.craft-result-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0}
 .craft-viewer-toolbar p,.craft-result-meta{font-size:13px;color:#65735f}.craft-viewer-toolbar p{margin:0}
+.craft-viewer-options{display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap}.craft-viewer-auto{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:#42604c;cursor:pointer}.craft-viewer-auto input{width:16px;height:16px;margin:0;accent-color:#356449}.craft-viewer-auto:has(input:disabled){opacity:.6;cursor:default}
 .craft-result-meta{justify-content:flex-start;gap:16px;border-top:1px solid #e3e7dc}
 .craft-result .button-primary{display:inline-flex;align-items:center;padding:11px 17px;border-radius:8px;background:#356449;color:white;text-decoration:none;font-size:14px}
 .craft-history>summary{font-weight:600;color:#426451;cursor:pointer}.craft-history ol{padding:0;margin:16px 0 0;list-style:none}.craft-history li{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #e3e7dc;padding:14px 0}.craft-history li>div:first-child{display:flex;flex-direction:column;gap:4px}.craft-history li span{font-size:12px;color:#69786c}.craft-history a{font-size:13px;color:#35694c}
