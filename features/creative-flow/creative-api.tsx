@@ -85,5 +85,5 @@ export function CreativeServiceStatus() {
     finally { setChecking(false); }
   }
   useEffect(() => { void check(); }, []);
-  return <div className="settings-section"><h3>第一阶段 · 创意</h3><p>DeepSeek V4 Flash · {status}</p><p className="settings-note">完善、换方向与按要求修改。密钥在项目 .env.local 中通过 DEEPSEEK_API_KEY 配置，修改后重启开发服务。配置状态不代表余额或连通性已经验证。</p><Button variant="secondary" disabled={checking} onClick={check}>刷新服务状态</Button></div>;
+  return <div className="settings-section"><h3>第一阶段 · 创意</h3><p>文字生成服务 · {status}</p><p className="settings-note">完善、换方向与按要求修改。在设置中配置文字服务的 API 地址、密钥和模型，保存后用于新请求。配置状态不代表余额或连通性已经验证。</p><Button variant="secondary" disabled={checking} onClick={check}>刷新服务状态</Button></div>;
 }

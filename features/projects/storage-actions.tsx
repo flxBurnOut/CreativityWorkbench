@@ -1,9 +1,10 @@
 'use client';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/workbench/ui';
-import { backupWorkspace,legacyProjects,restoreOutputFiles } from './server-store';
+import { backupWorkspace,legacyProjects,restoreOutputFiles,restoreMediaFiles } from './server-store';
 import { parseStoredWorkspace,type Project,type Workspace } from './model';
 import { projectOutputIds } from '../../lib/workbench/output-contract.mjs';
+import { projectPatternMediaIds } from '../../lib/workbench/media-references.mjs';
 export function StorageActions({workspace,change,notice}:{workspace:Workspace;change:(update:(p:Workspace)=>Workspace)=>void;notice:(message:string)=>void}){
   const upload=useRef<HTMLInputElement>(null);const [busy,setBusy]=useState(false);
   function merge(projects:Project[]){
@@ -15,7 +16,7 @@ export function StorageActions({workspace,change,notice}:{workspace:Workspace;ch
       if(file.size>200*1024*1024)throw new Error('备份文件请小于 200 MB。');
       const value=JSON.parse(await file.text());if(value.format!=='lingnan-workbench-backup'||![1,2].includes(value.version)||!Array.isArray(value.workspace?.projects))throw new Error('不是有效的工作台备份。');
       for(const p of value.workspace.projects)for(const asset of p.assets){if(typeof asset.data!=='string'||!/^data:image\/(png|jpeg|webp);base64,/.test(asset.data))throw new Error('备份图片格式无效。');const response=await fetch(asset.data);asset.blob=await response.blob();delete asset.data;}
-      const parsed=parseStoredWorkspace({version:1,revision:1,workspace:value.workspace});const required=parsed.workspace.projects.flatMap(projectOutputIds);if(required.length&&value.version!==2)throw new Error('该备份缺少成品文件部分。');if(value.version===2)await restoreOutputFiles(value.files,required);merge(parsed.workspace.projects);
+      const parsed=parseStoredWorkspace({version:1,revision:1,workspace:value.workspace});const required=parsed.workspace.projects.flatMap(projectOutputIds),requiredMedia=parsed.workspace.projects.flatMap(projectPatternMediaIds);if((required.length||requiredMedia.length)&&value.version!==2)throw new Error('该备份缺少成品文件部分。');if(value.version===2){await restoreMediaFiles(value.media,requiredMedia);await restoreOutputFiles(value.files,required);}merge(parsed.workspace.projects);
     }catch(reason){notice(reason instanceof Error?reason.message:'备份无法导入。');}finally{setBusy(false);}
   }}/></div>;
 }

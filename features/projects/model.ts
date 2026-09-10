@@ -31,8 +31,10 @@ export interface WebsiteDraft {spec:SiteSpec;builtSpec?:SiteSpec;previewFileId?:
 export interface WebsiteBrief {goal:string;change:string;scope:'all'|'appearance'|'content'|'images'|'interaction';autoAssets:boolean}
 export interface WebsiteRequest {prompt:string;basis:string;assetIds:string[];bundleFileId?:string;baseFileId?:string;source?:string;taskId?:string}
 export interface WebsiteSource {verificationMethod?:'not-tested'|'static'|'browser'|'user-browser';verificationResult?:'not-tested'|'passed'|'failed';verificationEvidence?:string;fileId:string;entryCount:number;description:string;instructions:string;verification:string;taskId?:string;requestSource?:string;importedAt:number;previewPath?:string}
+export interface CraftRequest {goal:string;taskId:string;requestedAt:number}
+export interface CraftAsset {taskId:string;title:string;kind:string;prompt:string;createdAt:number;blendFileId:string;glbFileId:string;plan:Record<string,unknown>;stats:{vertices:number;triangles:number;objects:number;materials:number;dimensions:[number,number,number];unit:'m'};warnings:string[];knowledge?:{id:string;version:string}[];texture?:{sourceTaskId:string;sourceBlendFileId:string;sourceGlbFileId:string;prompt:string;model:string;size:number;geometryHash:string;method?:'image-wrap';imageFileId?:string}}
 export interface FlowRecord {id:string;type:WorkType;target:string;createdAt:number;origin:string;taskId?:string;fingerprint:string;value:any;dependencies:{key:string;label:string;fingerprint:string}[]}
-export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteBrief?:WebsiteBrief;websiteEdit?:{change:string;scope:WebsiteBrief['scope']};studioRevision?:string;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];transfer?:Project['transfer'];transfers?:Project['transfers']}
+export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteBrief?:WebsiteBrief;websiteEdit?:{change:string;scope:WebsiteBrief['scope']};studioRevision?:string;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];craftGoal?:string;craftRequest?:CraftRequest;craftAsset?:CraftAsset;transfer?:Project['transfer'];transfers?:Project['transfers']}
 export interface Concept {
   id: string; category: Category; name: string; description: string;
   candidateAssetId?: string; savedAssetId?: string; prompt: string; revisionRequest: string;
@@ -56,6 +58,7 @@ export interface Project {
   websiteSource?:WebsiteSource; websiteSourceCandidate?:WebsiteSource; novelReferenceIds?:string[]; variants?:Partial<Record<WorkType,TypeBranch>>;
   transfer?:WorkflowTransfer;transfers?:WorkflowTransfer[];
   flow?:{version:1;records:FlowRecord[]}; designPackage?:{fileId:string;source:string;taskId:string};
+  craftGoal?:string;craftRequest?:CraftRequest;craftAsset?:CraftAsset;
 }
 export interface Workspace { projects: Project[]; activeProjectId: string | null }
 export interface StoredWorkspace { version: 1; revision: number; workspace: Workspace }

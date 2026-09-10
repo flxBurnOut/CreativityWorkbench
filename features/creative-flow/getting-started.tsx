@@ -9,11 +9,11 @@ export const workIcons: Record<WorkType, IconName> = { novel: 'book', video: 'fi
 export function CapabilityCards({ onCreate }: { onCreate: (type: WorkType) => void }) {
   return <section className="capabilities" aria-labelledby="capabilities-title">
     <div className="section-heading"><div><h2 id="capabilities-title">你想做出什么？</h2><p>选择一个目标，工作台会按对应流程带你开始。</p></div><Button variant="ghost" onClick={() => onCreate('undecided')}>还没确定，先记想法 <Icon name="arrow" size={15}/></Button></div>
-    <div className="capability-grid">{TYPE_ORDER.filter(type => type !== 'undecided'&&type!=='craft').map(type => <button type="button" className="capability-card" key={type} onClick={() => onCreate(type)}>
+    <div className="capability-grid">{TYPE_ORDER.filter(type => type !== 'undecided').map(type => <button type="button" className="capability-card" key={type} onClick={() => onCreate(type)}>
       <span className="capability-icon"><Icon name={workIcons[type]} size={23}/></span><span className="capability-heading"><strong>{WORK_GUIDES[type].title}</strong></span>
-      <span className="capability-description">{WORK_GUIDES[type].description}</span><span className="capability-output">{WORK_GUIDES[type].output}</span><span className="capability-start">开始{type === 'novel' ? '写故事' : type === 'video' ? '做视频' : '做网站'} <Icon name="arrow" size={16}/></span>
+      <span className="capability-description">{WORK_GUIDES[type].description}</span><span className="capability-output">{WORK_GUIDES[type].output}</span><span className="capability-start">{type === 'craft' ? '开始生成资产' : type === 'novel' ? '开始写故事' : type === 'video' ? '开始做视频' : '开始做网站'} <Icon name="arrow" size={16}/></span>
     </button>)}</div>
-    <details className="shared-capabilities"><summary>更多能力与设计资料</summary><p>文化资料、素材与详细编辑可在作品中按需打开。</p><Button variant="ghost" onClick={()=>onCreate('craft')}>准备 3D 前期设计资料（暂不生成模型）</Button></details>
+    <details className="shared-capabilities"><summary>文化资料与其他能力</summary><p>文化资料、图片素材与详细编辑可在对应作品中按需打开。</p></details>
   </section>;
 }
 
@@ -39,10 +39,10 @@ export function WorkflowHelp({ initialType = 'novel', project, notice, onSetting
     <div className="help-types" aria-label="查看各类作品流程">{TYPE_ORDER.map(value => <button type="button" key={value} aria-pressed={type === value} onClick={() => setType(value)}><Icon name={workIcons[value]} size={17}/>{WORK_GUIDES[value].title}</button>)}</div>
     <div className="help-route"><h3>{guide.title}</h3><p>{guide.route}</p><strong>最后交付：{guide.output}</strong><p className="muted">{guide.boundary}</p></div>
     <h3>在网页里怎么操作</h3><ol className="help-steps">{[
-      ['描述目标', '写一次作品要求；网站自动匹配空项目的主题资料，小说直接创作正文，视频直接描述镜头。'],
+      ['描述目标', '写一次作品要求；网站自动匹配空项目的主题资料，小说直接创作正文，视频直接描述镜头，3D 资产直接描述器物或建筑。'],
       ['查看进度与初稿', '页面会说明正在做什么。需要 WorkBuddy 时复制已有交接请求，回传结果后直接显示预览。'],
       ['围绕结果修改', '在作品旁提出这次的修改要求。网站可选文字、配色、图片或功能范围，沿用实际旧源码。'],
-      ['使用与交付', '满意后点击“使用这个版本”，下载实际文件。旧版本在详细编辑中保留；文件收到不等于所有功能已经验收。'],
+      ['使用与交付', '小说、视频和网站确认使用后下载实际文件。3D 模型完成后直接展示和下载 Blender 文件，历史版本在本页保留；文件收到不等于所有功能已经验收。'],
     ].map(([title, detail], i) => <li key={title}><span>{i + 1}</span><div><h4>{title}</h4><p>{detail}</p></div></li>)}</ol>
     <Button variant="secondary" onClick={onSettings}>打开生成服务设置</Button>
     <h3>从哪里找文化依据</h3><p>网站可在“本次目标与资料”查看；其他作品可打开详细编辑，再在“确定创意”点击“选择文化资料”，按元素或地域筛选、查看出处并勾选。选中的事实会进入后续生成；自己的时代背景、人物与虚构设定继续写在“当前项目的文化语境”。可下载本次文化依据，网站任务包也会附上资料。WorkBuddy 对话可直接请求搜索并选用相关条目。</p>

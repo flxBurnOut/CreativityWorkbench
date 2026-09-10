@@ -19,7 +19,7 @@ async function setup(t,options={}){
   const created=await call('project_create',{requestId:uid(),idea:'做一个岭南文化网站',type:'website'}),projectId=created.projectId;
   const get=()=>call('project_get',{projectId});
   const begin=async(extra={})=>{const p=await get();return call('website_run',{projectId,requestId:uid(),expectedVersion:p.projectVersion,goal:'骑楼与满洲窗文化网站，带探索清单',...extra});};
-  const until=async(id,status)=>{for(let i=0;i<300;i++){const task=await call('task_get',{taskId:id});if(task.status===status)return task;if(task.status==='failed')throw Error(task.error);await new Promise(r=>setTimeout(r,20));}throw Error('Timed out '+status);};
+  const until=async(id,status,predicate=()=>true)=>{for(let i=0;i<300;i++){const task=await call('task_get',{taskId:id});if(task.status===status&&predicate(task))return task;if(task.status==='failed')throw Error(task.error);await new Promise(r=>setTimeout(r,20));}throw Error('Timed out '+status);};
   const webTasks=async()=>(await (await fetch(base+'/v1/tasks?projectId='+projectId)).json()).tasks;
   return {directory,call,projectId,get,begin,until,webTasks,url:()=>base,restart:async()=>{await new Promise(r=>server.close(r));await start();}};
 }
@@ -128,7 +128,7 @@ test('whole-site revision stays editable while waiting and preserves its origina
   const h=await setup(t),first=await h.begin(),initial=await h.until(first.id,'waiting_external');await writeFile(initial.handoff.output,site());await h.until(first.id,'succeeded');await h.webTasks();
   let current=await h.get();const original=current.project.websiteSourceCandidate.fileId;
   const task=await h.begin({change:'整站改成温暖的岭南街巷风格',scope:'all',base:'draft',dispatch:'auto'});
-  const waiting=await h.until(task.id,'waiting_external');current=await h.get();
+  const waiting=await h.until(task.id,'waiting_external',value=>value.dispatch==='manual');current=await h.get();
   assert.equal(waiting.dispatch,'manual');assert.equal(websiteStudioState(current.project,await h.webTasks()).canHandoff,true);
   const bundle=unzipSync(await readFile(join(h.directory,'files',waiting.result.websiteRequest.bundleFileId)));
   assert.deepEqual(Buffer.from(bundle['existing-website.zip']),await readFile(join(h.directory,'files',original)));

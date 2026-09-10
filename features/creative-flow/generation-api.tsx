@@ -26,10 +26,10 @@ export type GenerationControls = {
   fitFrame?:(objectId:string,fit:'pad'|'crop')=>Promise<void>;
   setProvider:(value:string)=>void; setRatio:(value:string)=>void;
 };
-const names:Record<string,string> = {creative:'创意方案',content:'内容方案',art:'美术提示词',objects:'对象清单',novel:'短篇正文',image:'概念图',cover:'项目封面','video-frame':'镜头首帧候选','design-package':'设计资料包','video-plan':'视频分镜','video-shot':'视频镜头','video-audio':'旁白配音','video-compose':'完整视频',website:'网站生成任务包','website-build':'旧模板网站更新'};
+const names:Record<string,string> = {creative:'创意方案',content:'内容方案',art:'美术提示词',objects:'对象清单',novel:'短篇正文',image:'概念图',cover:'项目封面','video-frame':'镜头首帧候选','design-package':'设计资料包','craft-model':'3D 网格资产','video-plan':'视频分镜','video-shot':'视频镜头','video-audio':'旁白配音','video-compose':'完整视频',website:'网站生成任务包','website-build':'旧模板网站更新'};
 const statuses:Record<string,string> = {queued:'请求已记录',running:'正在生成',waiting_external:'等待 WorkBuddy 文件',waiting_provider:'视频服务处理中',uncertain:'结果待核实',succeeded:'生成完成',failed:'生成失败',cancelled:'已取消等待',superseded:'已由后续任务接替'};
 const sectionNames=Object.fromEntries(Object.values(CONTENT_SECTIONS).flat().map(s=>[s.key,s.label]));
-type ServiceStatus={text:{configured:boolean;model:string};images:{provider:string;workbuddyConfigured:boolean;externalConfigured:boolean;model:string};video:{provider:string;externalConfigured:boolean;model:string;scope:string}};
+type ServiceStatus={text:{configured:boolean;model:string;provider?:string};images:{provider:string;workbuddyConfigured:boolean;externalConfigured:boolean;model:string};video:{provider:string;externalConfigured:boolean;model:string;scope:string};craft?:{available:boolean;planner:string;message:string}};
 
 export function useGeneration(project:Project|null,demo:boolean,edit:EditProject,notice:Notice,flush:()=>Promise<void>,synchronize?:(force?:boolean)=>Promise<void>) {
   const [tasks,setTasks] = useState<GenerationTask[]>([]);
@@ -184,10 +184,10 @@ export function useGeneration(project:Project|null,demo:boolean,edit:EditProject
   return {controls:{error:error||pollError,textAvailable:serviceStatus?.text.configured,videoProvider:serviceStatus?.video?.provider,tasks,refresh,run,fitFrame,imageResults:project?latestImageResults(project,tasks):{},selectImage:(objectId:string,input:{taskId?:string;assetId?:string},review?:ImageReview)=>changeImage(objectId,input,review),prepareImage:(objectId:string,taskId:string)=>changeImage(objectId,{taskId},undefined,true),dismissResult:dismiss,busy:submitting,contentBusy,provider,ratio,setProvider,setRatio},panel,readiness};
 }
 
-export function GenerationServiceStatus(){
+export function GenerationServiceStatus({focusTexture=false}:{focusTexture?:boolean}={}){
   const[data,setData]=useState<ServiceStatus|null>(null);
   const[error,setError]=useState('');
   async function refresh(){try{setData(await api<ServiceStatus>('status'));setError('');}catch(e){setError(String(e));}}
   useEffect(()=>{void refresh();},[]);
-  return <><ServiceSettings onSaved={()=>void refresh()}/><div className="settings-section"><h3>多媒体生成服务</h3>{error&&<p role="alert">{error}</p>}{data&&<><p>文字：{data.text.model} · {data.text.configured?'已配置':'待配置服务端密钥'}</p><p>网站：提示词与素材包准备无需文字 API；执行模型负责完整实现。</p><p>WorkBuddy 任务交接：{data.images.workbuddyConfigured?'已配置自动发送授权':'可手动交接，自动发送待授权'}</p><p>外部图像 API：{data.images.model} · {data.images.externalConfigured?'已配置':'待配置'}</p><p>外部视频 API：{data.video?.model} · {data.video?.externalConfigured?'已配置':'待配置'}</p><p className="settings-note">配置状态不等于真实调用成功。可在上方 API 配置中保存地址与密钥。WorkBuddy 的视频与配音能力取决于该应用实际可用服务；视频在本机合成。3D 文创最后实施。</p></>}<Button variant="secondary" onClick={()=>void refresh()}>刷新服务状态</Button></div></>;
+  return <><ServiceSettings onSaved={()=>void refresh()} focusTexture={focusTexture}/><div className="settings-section"><h3>多媒体生成服务</h3>{error&&<p role="alert">{error}</p>}{data&&<><p>文字：{data.text.provider && data.text.provider+' · '}{data.text.model} · {data.text.configured?'已配置':'待配置服务端密钥'}</p><p>网站：提示词与素材包准备无需文字 API；执行模型负责完整实现。</p><p>WorkBuddy 任务交接：{data.images.workbuddyConfigured?'已配置自动发送授权':'可手动交接，自动发送待授权'}</p><p>外部图像 API：{data.images.model} · {data.images.externalConfigured?'已配置':'待配置'}</p><p>外部视频 API：{data.video?.model} · {data.video?.externalConfigured?'已配置':'待配置'}</p>{data.craft&&<p>3D 资产：{data.craft.available?'Blender 已找到':'Blender 待配置'} · {data.craft.planner==='deepseek'?'文字服务解析需求':'WorkBuddy 原任务交接'}</p>}<p className="settings-note">配置状态不等于真实调用成功。可在上方 API 配置中保存地址与密钥。WorkBuddy 的视频与配音能力取决于该应用实际可用服务；视频在本机合成。3D 资产由本机 Blender 构造并校验；网页只提供查看与下载。</p></>}<Button variant="secondary" onClick={()=>void refresh()}>刷新服务状态</Button></div></>;
 }

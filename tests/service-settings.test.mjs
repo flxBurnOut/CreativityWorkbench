@@ -5,6 +5,23 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServiceSettings } from '../lib/workbench/service-settings.mjs';
 import { generationStatus } from '../lib/workbench/generation.mjs';
+import { createTestDirectory } from './helpers/test-directory.mjs';
+
+test('settings report the actual persisted time without exposing keys or claiming an unsuccessful save', async t => {
+  const {directory} = await createTestDirectory(t, 'settings-receipt');
+  const path = join(directory, 'settings.json'), env = {};
+  const settings = createServiceSettings(env, path);
+  assert.equal(settings.status().savedAt, null);
+  const result = settings.save({DEEPSEEK_API_KEY: 'test-replacement'});
+  assert.equal(result.savedAt, (await stat(path)).mtime.toISOString());
+  assert.equal(result.secrets.DEEPSEEK_API_KEY, true);
+  assert.equal(env.DEEPSEEK_API_KEY, 'test-replacement');
+  assert.equal(JSON.stringify(result).includes('test-replacement'), false);
+  assert.throws(() => settings.save({DEEPSEEK_API_KEY: 'invalid\nkey'}));
+  assert.equal(settings.status().savedAt, result.savedAt);
+  assert.equal(createServiceSettings({}, path).status().savedAt, result.savedAt);
+  assert.equal(JSON.parse(await readFile(path, 'utf8')).savedAt, undefined);
+});
 
 test('settings persist securely, apply immediately, never expose keys, and clear environment fallback', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'workbench-settings-'));
@@ -40,10 +57,14 @@ test('HTTP settings endpoints redact credentials and update generation status', 
     const base = `http://127.0.0.1:${server.address().port}/v1/`;
     const response = await fetch(base + 'settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ DEEPSEEK_API_KEY: 'test-only-key' }) });
     assert.equal(response.status, 200);
-    assert.equal((await response.text()).includes('test-only-key'), false);
+    const saved = await response.json();
+    assert.equal(JSON.stringify(saved).includes('test-only-key'), false);
+    assert.equal(saved.savedAt, (await stat(join(directory, 'settings.json'))).mtime.toISOString());
     assert.equal((await (await fetch(base + 'status')).json()).text.configured, true);
     assert.equal((await fetch(base + 'settings', { headers: { Origin: 'https://example.com' } })).status, 403);
-    assert.equal((await (await fetch(base + 'settings')).json()).secrets.DEEPSEEK_API_KEY, true);
+    const loaded = await (await fetch(base + 'settings')).json();
+    assert.equal(loaded.secrets.DEEPSEEK_API_KEY, true);
+    assert.equal(loaded.savedAt, saved.savedAt);
   } finally {
     await new Promise(resolve => server.close(resolve));
     await rm(directory, { recursive: true, force: true });

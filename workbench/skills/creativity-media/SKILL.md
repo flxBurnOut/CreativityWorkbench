@@ -3,11 +3,13 @@ name: creativity-media
 description: 通过创意工作台 MCP 整理概念图与单镜头提示词、交接实际媒体，或获取网站生成任务与素材并由当前 agent 完整实现网站；保留旧视频合成与网站文件。
 description_zh: 在 WorkBuddy 对话中完成概念图、单镜头视频和网站生成任务交接。
 description_en: Prepare project prompts and media handoffs, generate single shots, and implement websites from Workbench request bundles using the current agent.
-version: 0.7.0
+version: 0.10.0
 author: CreativityWorkbench
 ---
 
 # 创意工作台：多媒体交付
+
+**三维任务优先路由：kind=craft-model 时先读取 [三维资产生成](references/craft-assets.md)。args.textureMode=image 是平面图案任务，生成 PNG 后用 task_complete_handoff 回传原任务，由本机贴图；不能调用 craft_complete_plan。只有普通建模的方案交接使用 craft_complete_plan。成功以 result.craftAsset 和真实 Blender/GLB 为准。**
 
 **网站连续任务优先路由：task_get 返回 kind=website 且 args.guided=true 时，读取 [一次目标与网站连续制作](references/website-studio.md)，用原任务接收 result.zip 或 website_complete；不套用图片规则，不新建任务，不额外 task_adopt。** 新网站也可用 website_run 开始，当前 agent 继续完成实际代码。
 
@@ -33,7 +35,7 @@ author: CreativityWorkbench
 
 等待任务时使用合理间隔（例如 2–5 秒）；一个交互回合内持续数次没有变化就报告任务 ID 和当前状态，之后继续查原任务，不宣称后台一定完成。`uncertain` 不等于失败；先查询、检查交接文件或已存在的服务作业，禁止换 ID 自动重新付费生成。`task_cancel` 取消本地等待，后续查询仍可找回结果；不能保证远程费用停止。
 
-媒体采用后调用 `project_deliver` 展示实际文件。`stale:true` 表示旧依据；历史文件保留。网站任务返回的 ZIP 是提示词与素材包，不是网站；收到任务包后使用当前实际可用的编程能力完成内容、设计、代码、交互和验证，交付真实源码与运行说明。工作台不负责网站业务实现或部署，外部依赖须如实说明。3D 生成未实现。不得用测试图、静帧视频、假按钮或虚构文件代替真实结果。
+媒体采用后调用 `project_deliver` 展示实际文件。`stale:true` 表示旧依据；历史文件保留。网站任务返回的 ZIP 是提示词与素材包，不是网站；收到任务包后使用当前实际可用的编程能力完成内容、设计、代码、交互和验证，交付真实源码与运行说明。工作台不负责网站业务实现或部署，外部依赖须如实说明。三维资产由 `craft_generate` 生成受限器具与建筑构件，成功自动同步并交付真实 `.blend/.glb`，不需要额外采用。不得用测试图、静帧视频、假按钮或虚构文件代替真实结果。
 
 
 继续创作、类型分支、历史恢复、首帧准备、源码再导入与 3D 前期资料包，先读 [连续创作规则](references/continuous-workflow.md)。
@@ -47,7 +49,7 @@ author: CreativityWorkbench
 
 ## 验收与传参兼容
 
-本版要求核心协议 10、29 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+本版要求核心协议 13、31 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
 
 ## 文创文旅网站与主题视觉素材
 

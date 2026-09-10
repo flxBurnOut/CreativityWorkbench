@@ -12,6 +12,6 @@
 
 网站先获取网站任务包，读取 PROMPT.md、materials.json、图片与 existing-website.zip（如果有）。在当前执行端读取和修改真实源码，完整实施用户要求，并运行适当检查；不回到旧固定模板。将源码和运行说明打成 ZIP，放入 project_get 返回的 inbox，调用 website_source_import({filename,description,instructions,verification,taskId?,...版本字段})。仅导入为候选，不执行包内代码。核对后 workflow_update({action:"adopt-website-source",...版本字段})。下一次 website 任务自动附带该版本真实 ZIP，保留旧源码。project_deliver 返回源码文件；静态预览与 ZIP 结构通过不等于业务、服务端或部署已验证。
 
-craft / undecided 用 task_start(kind:"design-package") → task_get → task_adopt → project_deliver 交付当前创意、形体、美术、来源和实际图片资料。文创最终方向仍为 3D；此包没有模型生成，不称为已完成 3D 成品。
+craft / undecided 的旧资料流程用 task_start(kind:"design-package") → task_get → task_adopt → project_deliver 交付当前创意、形体、美术、来源和实际图片资料；此包没有模型，不能称为 3D 成品。真实三维资产改用 [craft_generate](craft-assets.md)，成功自动保存并显示，下载 Blender 文件。
 
 网站交接会直接附上已沿用的完整小说正文、选定的已采用音视频、字幕与来源，不要求先执行网站内容生成。不同来源类型可以并存；同一来源再次沿用时更新该类型快照。来源后续修改只提示核对，不静默更新或丢弃旧快照。

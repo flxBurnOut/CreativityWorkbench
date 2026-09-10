@@ -4,6 +4,7 @@ import { once } from 'node:events';
 import { generateCreativeBrief, creativeStatus } from '../lib/workbench/creative-brief.mjs';
 import { createRuntimeServer } from '../lib/workbench/http-server.mjs';
 import { POST } from '../app/api/workbench/creative/route.ts';
+import {createTestDirectory,closeTestServer} from './helpers/test-directory.mjs';
 
 const input = { action: 'improve', type: 'novel', idea: '岭南街巷的故事，保留 {name} 和 123.45。', brief: '保留当代背景', culture: '广府生活，细节待核实', instruction: '' };
 const output = { title: '廊下的故事', brief: '当代岭南街巷。保留 {name} 和 123.45。', culture: '广府生活，具体习俗待核实。' };
@@ -61,8 +62,9 @@ test('abort signal reaches the provider and reports interruption', async () => {
   await assert.rejects(result, error => error.code === 'interrupted');
 });
 
-test('runtime HTTP returns structured result and refuses browser cross-origin access', async () => {
-  const server = createRuntimeServer({ env, fetchImpl: async () => success() });
+test('runtime HTTP returns structured result and refuses browser cross-origin access', async t => {
+  const scope = await createTestDirectory(t,'creative-http');
+  const server = createRuntimeServer({ env, dataDirectory:scope.directory, fetchImpl: async () => success() });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const base = 'http://127.0.0.1:' + server.address().port;
   try {
@@ -74,7 +76,7 @@ test('runtime HTTP returns structured result and refuses browser cross-origin ac
     assert.equal((await fetch(base + '/v1/creative/brief', { ...request, headers: { ...request.headers, Origin: 'https://untrusted.example' } })).status, 403);
     assert.equal((await fetch(base + '/v1/creative/brief', { ...request, body: '{' })).status, 400);
     assert.equal((await fetch(base + '/v1/creative/brief', { ...request, body: JSON.stringify({ ...input, idea: '' }) })).status, 400);
-  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+  } finally { await closeTestServer(server); }
 });
 
 test('Web endpoint rejects cross-site requests and non-JSON posts before forwarding', async () => {

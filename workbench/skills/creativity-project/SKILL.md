@@ -3,11 +3,13 @@ name: creativity-project
 description: 在创意工作台中创建和继续文化创作项目，保存创意、小说、脚本、美术方向和概念设定；通过核心 MCP 与工作台页面共享草稿。
 description_zh: 在 WorkBuddy 对话中完成创意工作台的项目与文字创作。
 description_en: Create and edit cultural creative projects and written drafts through the Creativity Workbench MCP tools.
-version: 0.7.0
+version: 0.10.0
 author: CreativityWorkbench
 ---
 
 # 创意工作台：项目与创作
+
+**三维任务优先路由：kind=craft-model 时先读取 [三维资产生成](references/craft-assets.md)。args.textureMode=image 是平面图案任务，生成 PNG 后用 task_complete_handoff 回传原任务，由本机贴图；不能调用 craft_complete_plan。只有普通建模的方案交接使用 craft_complete_plan。成功以 result.craftAsset 和真实 Blender/GLB 为准。**
 
 **网站连续任务优先路由：task_get 返回 kind=website 且 args.guided=true 时，读取 [一次目标与网站连续制作](references/website-studio.md)，用原任务接收 result.zip 或 website_complete；不套用图片规则，不新建任务，不额外 task_adopt。** 新网站也可用 website_run 开始，当前 agent 继续完成实际代码。
 
@@ -33,7 +35,7 @@ author: CreativityWorkbench
 
 图像生成／编辑、单镜头视频、网站任务与素材交接使用多媒体流程，旧视频合成与网站文件仍保留。可用时加载 `creativity-media`；如果只安装了本技能，则根据核心 MCP 工具参数执行并保持相同的版本与重试规则。没有实际媒体生成能力时说明缺口，保留现有草稿。
 
-支持短篇正文，长篇编排尚未实现。`craft` 用于记录未来 3D 文创需求，不承诺生成模型、纹理或拓扑。导出或本地预览不代表网站已发布。
+支持短篇正文，长篇编排尚未实现。`craft` 可用本机 Blender 生成受限器具与建筑构件，网页查看并下载真实 `.blend`；不提供直接三维编辑或任意雕塑。导出或本地预览不代表网站已发布。
 
 视频当前主流程为单镜头：保存一个镜头即可，不要求先生成分镜。网站使用 `prompt_prepare(kind:"website")` 整理任务，再保存 `websiteRequest`，`task_start(kind:"website")` 准备提示词和素材包；由当前 agent 完整实现网站。`website.spec` / `website-build` 仅为旧模板兼容，不用于新网站任务。
 
@@ -49,7 +51,7 @@ author: CreativityWorkbench
 
 ## 验收与传参兼容
 
-本版要求核心协议 10、29 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+本版要求核心协议 13、31 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
 
 ## 文创文旅网站与主题视觉素材
 

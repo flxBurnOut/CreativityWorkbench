@@ -1,6 +1,6 @@
 # 文创文旅网站：素材与跨媒介流程
 
-当前 Runtime 协议 10，Skills 0.7.0。网页连续制作优先使用 [website-studio.md](website-studio.md)，下面为详细资料编辑与兼容流程。先 workbench_status 核对当前连接，重启旧 Runtime、重新导入 Skills 后在 WorkBuddy 中实际复测。标准工具参数若发生数组序列化问题，用 workbench_call_json，不绕到任意 HTTP 请求。
+当前 Runtime 协议 11，Skills 0.8.0。网页连续制作优先使用 [website-studio.md](website-studio.md)，下面为详细资料编辑与兼容流程。先 workbench_status 核对当前连接，重启旧 Runtime、重新导入 Skills 后在 WorkBuddy 中实际复测。标准工具参数若发生数组序列化问题，用 workbench_call_json，不绕到任意 HTTP 请求。
 
 1. project_get 读取目标项目。knowledge_search / knowledge_apply 选择与主题相关的事实，保留地域、时代、出处和虚构设定；不要求导入游戏工程。
 2. theme_asset_list 按“骑楼、满洲窗、佛山”等搜索。theme_asset_apply 选择 entryIds，带 requestId 与最新 expectedVersion。会同步保存 PNG、概念图和文化依据；不付费生图。返回后重新 project_get。默认图是原创数字插画，不能说成实景、文物或传统技艺复原。

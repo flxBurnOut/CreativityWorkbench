@@ -1,5 +1,13 @@
 # 项目约定
 
+- 2026-09-10 平面图案：协议 13、31 工具、Skills 0.10.0。网页默认 craft_generate textureMode=image + textureOf，复用 WorkBuddy/外部图片服务生成平面 PNG，本机脚本仅贴到内置器皿外壁；无 HY/COS 依赖，内壁、附件、网格及历史保留。原任务通过 task_complete_handoff 回传 PNG，再本机贴图到 result.craftAsset 才成功，不调用 craft_complete_plan。生图先保存图片再建模，未知请求不重发，取消不采用晚到结果，单进程与内存/文件预算保持。图片引用参与备份，清理只删除验证过的本任务副本。旧无 textureMode 的纹理调用仍走 HY 兼容路径，不自动切换供应商。详见 docs/CRAFT_PATTERN_2026-09-10.md。
+
+- 2026-09-10 文化纹理：协议 12、31 工具、Skills 0.9.0。craft_generate 可用 textureOf 指定本项目已有模型；沿用原 goal，可选 texturePrompt。先本机整理 UV，再私有 COS 中转，hy-3d-texture 只生成 1024 颜色图，贴回原 Blender 网格并校验几何哈希。保持器形、原版本与文件引用；不把返回的模型或缩略图直接替换为成果。未知提交不自动重发，取消后不采用晚到结果。只有同 Token Hub 地址才可复用文字密钥，COS 凭据单独配置；本机回归不等于真实 COS/Token Hub 成功。详见 docs/CRAFT_TEXTURE_2026-09-10.md。
+
+- 2026-09-10 文字服务：TEXT_API_BASE_URL、TEXT_API_MODEL 决定实际接口与模型；保留 DEEPSEEK_API_KEY 作为兼容的服务端密钥字段，支持 Token Hub 按量入口。旧配置继续使用 DeepSeek 官方默认值，不自动猜测密钥发行方或失败后切换供应商。创意与共享文字/3D 解析必须走同一配置；设置仅显示凭据存在，不声称鉴权成功。Token Hub 的模型目录不等于已实现其图片、视频或云端 3D 接口，详见 docs/TEXT_SERVICES_2026-09-10.md。
+
+- 2026-09-10 独立三维资产：当前协议 11、31 工具、Skills 0.8.0。craft_generate 统一创建 craftRequest 与 craft-model 原任务；WorkBuddy 用 craft_complete_plan 回传受限 JSON，不执行任意脚本。成功自动存入 craftAsset 历史，仅匹配当前指针与固定依据才显示为当前；craftGoal 为可独立编辑的下一轮草稿。网页仅查看/下载真实 .blend/.glb，不提供直接编辑、参考图建模、圈足/杯等未实现构造或任意雕塑，不宣称自动嵌入文旅网站。Blender 单进程、1 GiB、180 秒、4 万三角形/240对象、每文件32 MiB；临时目录位于项目数据目录，等待进程停止后 finally 清理，保留成品与小型元数据。真实结构/重开验证与 DeepSeek/网页/WorkBuddy 证据分别记录，详见 docs/CRAFT_ASSETS_2026-09-10.md；以下版本段落均为当时记录。
+
 - 2026-09-10 资源生命周期：项目进程启动前预加载 lib/workbench/temp-env.mjs，将 TEMP/TMP/TMPDIR 限定到当前检出的 work/tmp/process，不改用户环境。测试使用 tests/helpers/test-directory.mjs；等待任务、HTTP 请求和自建子进程停止后才删自己的夹具，停止失败保留并报错。内存验证默认清理大型夹具。storage_cleanup 只删有正式副本与哈希证明的单个源文件，保留请求、输入、作品和历史。资源采样不等于 WorkBuddy 长时验收；实测及剩余风险见 docs/RESOURCE_AUDIT_2026-09-10.md。
 
 - 2026-09-10 前端缓存隔离：Vite cacheDir 必须落在当前检出目录的 .cache/node_modules/.vite/<command>/<mode>。测试副本可共享安装依赖，但不能共用 node_modules/.vite 预打包缓存；serve/build 分离，保留 node_modules 路径段以兼容 Vinext 的 CommonJS 过滤。缓存路径也必须参与 workbench-dependency-cache 插件名：Vite 不哈希 cacheDir，迁移后不换版本会让浏览器混用新旧 React。修复或测试后须确认用户实际页面及冷启动仍能加载，不能只验证测试副本。不要用关闭错误遮罩掩盖加载失败。

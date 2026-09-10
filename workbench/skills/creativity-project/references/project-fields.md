@@ -12,6 +12,8 @@
 | content.website | goal、pages、copy、behavior |
 | content.undecided | overview、keep |
 | content.craft | theme、motifs、copy、display；仅 3D 规划 |
+| craftGoal | 一句话三维需求草稿；运行中可继续编辑下一轮，最多 4000 字 |
+| craftRequest / craftAsset | Runtime 管理的原任务指针及真实 Blender/GLB 成品；使用 craft_generate 和 craft_complete_plan，不手写文件记录 |
 | art | direction、material、palette、constraints、fullPrompt |
 | requests | 五项字符串数组，分别对应 0–4 阶段修改要求 |
 | novel | title、text；taskId 可省略，由工具标注为对话创作 |

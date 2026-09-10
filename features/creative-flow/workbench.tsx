@@ -11,12 +11,13 @@ import { GenerationServiceStatus, useGeneration } from './generation-api';
 import { WorkflowPanel } from './workflow-panel';
 import {WebsiteStudio} from './website-studio';
 import {ResultStudio} from './result-studio';
+import {CraftStudio} from './craft-studio';
 import { switchWorkType } from '@/lib/workbench/workflow.mjs';
 import { StorageActions } from '@/features/projects/storage-actions';
 import { FLOW_LABELS, TYPE_ORDER, WORK_GUIDES } from './flow-guide';
 import { CapabilityCards, StageNavigation, StepGuide, WorkflowHelp } from './getting-started';
 
-type DialogState = { kind: 'new'; type?: WorkType } | { kind: 'help' | 'settings' | 'demo' } | { kind: 'manage' | 'rename' | 'cover'; projectId: string } | { kind: 'unavailable'; action: string } | null;
+type DialogState = { kind: 'new'; type?: WorkType } | { kind: 'settings'; section?: 'texture' } | { kind: 'help' | 'demo' } | { kind: 'manage' | 'rename' | 'cover'; projectId: string } | { kind: 'unavailable'; action: string } | null;
 const typeIcons: Record<WorkType, IconName> = { undecided: 'leaf', novel: 'book', video: 'film', craft: 'gift', website: 'globe' };
 
 
@@ -26,6 +27,8 @@ export default function Workbench() {
   const [detailsMode,setDetailsMode]=useState(false);
   const [autoWebsite,setAutoWebsite]=useState<string|null>(null);
   const websiteStarted=useCallback(()=>setAutoWebsite(null),[]);
+  const [autoCraft,setAutoCraft]=useState<string|null>(null);
+  const craftStarted=useCallback(()=>setAutoCraft(null),[]);
   const [demoProject, setDemoProject] = useState<Project | null>(null);
   const [demoState, setDemoState] = useState<DemoState>('ready');
   const [query, setQuery] = useState('');
@@ -36,6 +39,7 @@ export default function Workbench() {
   const project = demoProject ?? store.workspace.projects.find(p => p.id === store.workspace.activeProjectId) ?? null;
   const isDemo = Boolean(demoProject);
   const simpleWebsite=project?.type==='website'&&!isDemo&&!detailsMode;
+  const simpleCraft=project?.type==='craft'&&!isDemo;
   const simpleResult=Boolean(project&&['novel','video'].includes(project.type)&&!isDemo&&!detailsMode);
   useEffect(()=>setDetailsMode(false),[project?.id,project?.type]);
   const notice: Notice = useCallback((message, undo) => {
@@ -43,7 +47,7 @@ export default function Workbench() {
     setToast({ message, undo }); toastTimer.current = setTimeout(() => setToast(null), undo ? 10000 : 6000);
   }, []);
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
-  useEffect(() => { const open = () => setDialog({kind:'settings'}); window.addEventListener('workbench-open-settings',open); return () => window.removeEventListener('workbench-open-settings',open); }, []);
+  useEffect(() => { const open = (event:Event) => setDialog({kind:'settings',...(event instanceof CustomEvent && event.detail?.section==='texture'?{section:'texture' as const}:{})}); window.addEventListener('workbench-open-settings',open); return () => window.removeEventListener('workbench-open-settings',open); }, []);
 
   useEffect(() => {
     if (!store.ready) return;
@@ -125,7 +129,7 @@ export default function Workbench() {
       <div className="project-breadcrumb"><Button variant="ghost" icon="back" onClick={goHome}>所有创意</Button><span>/</span><span>{isDemo ? '独立演示项目' : TYPE_LABELS[project.type]}</span></div>
       <div className="project-heading"><div><button type="button" className="editable-title" aria-label="修改项目名称" onClick={() => setDialog({ kind: 'rename', projectId: project.id })}><h1>{project.title}</h1><Icon name="edit" size={17} /></button><div className="project-heading-meta"><TypePicker type={project.type} onChange={type => { edit(p => switchWorkType(p,type)); notice('已切换作品类型；各类型的内容、美术、对象和交付草稿分别保留，可选择沿用其他类型资料。'); }} /><span className="cultural-label"><Icon name="leaf" size={14} />岭南文化创作</span></div></div><span className={`save-status ${store.status === 'error' && !isDemo ? 'save-error' : ''}`} aria-live="polite"><span className="status-dot" />{isDemo ? '演示修改不保存' : saveLabels[store.status]}</span></div>
       {isDemo && <div className="demo-banner"><div><span className="tag tag-demo">演示项目</span><span>示例内容独立于你的项目；没有调用 AI。</span></div>{project.stage >= 3 && <label>结果状态演示<select aria-label="演示结果状态" value={demoState} onChange={event => setDemoState(event.target.value as DemoState)}><option value="ready">已有示例</option><option value="empty">空状态</option><option value="loading">生成中</option><option value="error">生成失败</option></select></label>}<Button variant="ghost" onClick={() => setDialog({ kind: 'demo' })}>更换示例</Button></div>}
-      {simpleWebsite?<WebsiteStudio key={project.id} project={project} edit={edit} notice={notice} generation={generation.controls} flush={store.flush} synchronize={store.synchronize} autoStart={autoWebsite===project.id} onStarted={websiteStarted} onDetails={()=>setDetailsMode(true)}/>:simpleResult?<ResultStudio key={project.id+project.type} project={project} edit={edit} notice={notice} generation={generation.controls} flush={store.flush} synchronize={store.synchronize} onDetails={()=>setDetailsMode(true)}/>:<>
+      {simpleCraft?<CraftStudio key={project.id+'craft'} project={project} edit={edit} notice={notice} generation={generation.controls} flush={store.flush} synchronize={store.synchronize} autoStart={autoCraft===project.id} onStarted={craftStarted}/>:simpleWebsite?<WebsiteStudio key={project.id} project={project} edit={edit} notice={notice} generation={generation.controls} flush={store.flush} synchronize={store.synchronize} autoStart={autoWebsite===project.id} onStarted={websiteStarted} onDetails={()=>setDetailsMode(true)}/>:simpleResult?<ResultStudio key={project.id+project.type} project={project} edit={edit} notice={notice} generation={generation.controls} flush={store.flush} synchronize={store.synchronize} onDetails={()=>setDetailsMode(true)}/>:<>
       {['website','novel','video'].includes(project.type)&&!isDemo&&<Button variant="secondary" onClick={()=>setDetailsMode(false)}>{project.type==='website'?'返回网站制作':'返回作品预览'}</Button>}
       <div className="project-route"><div><strong>目标：{WORK_GUIDES[project.type].output}</strong><p>{WORK_GUIDES[project.type].route}</p></div><Button variant="ghost" icon="help" onClick={() => setDialog({kind:'help'})}>功能与操作说明</Button></div>
       <StageNavigation project={project} onStage={goToStage}/>
@@ -133,13 +137,13 @@ export default function Workbench() {
       <div key={project.id+project.type} className="stage-body">{generation.readiness}{stageProps && <>{project.stage === 0 && <><CreativeStage {...stageProps} /></>}{project.stage === 1 && <ContentStage {...stageProps} results={generation.panel} />}{project.stage === 2 && <ArtStage {...stageProps} />}{project.stage === 3 && <ConceptsStage {...stageProps} />}{project.stage === 4 && <FinalStage {...stageProps} />}{project.stage !== 1 && generation.panel}<RequestComposer generation={generation.controls} creative={creative.controls} project={project} edit={edit} unavailable={unavailable} goToStage={goToStage} /></>}</div>{!isDemo && <details className="project-tools"><summary>资料继承与历史版本</summary><WorkflowPanel key={project.id+project.type} project={project} edit={edit} notice={notice}/></details>}</>}<footer className="project-footer"><Icon name="leaf" size={14} />让作品慢慢成形，也让每一步都留得住。</footer>
     </main>}
 
-    {dialog?.kind === 'new' && <NewProjectDialog initialType={dialog.type} onClose={() => setDialog(null)} onCreate={(idea, type, title) => { const created = createProject(idea, type, title); store.change(ws => ({ ...ws, projects: [...ws.projects, created], activeProjectId: created.id })); setDemoProject(null); setDialog(null); if(type==='website')setAutoWebsite(created.id); window.history.pushState(null, '', '#project/' + created.id); window.scrollTo(0, 0); }} />}
+    {dialog?.kind === 'new' && <NewProjectDialog initialType={dialog.type} onClose={() => setDialog(null)} onCreate={(idea, type, title) => { const created = createProject(idea, type, title); store.change(ws => ({ ...ws, projects: [...ws.projects, created], activeProjectId: created.id })); setDemoProject(null); setDialog(null); if(type==='website')setAutoWebsite(created.id); if(type==='craft')setAutoCraft(created.id); window.history.pushState(null, '', '#project/' + created.id); window.scrollTo(0, 0); }} />}
     {dialog?.kind === 'demo' && <DemoDialog onClose={() => setDialog(null)} onChoose={openDemo} />}
     {dialog?.kind === 'rename' && modalProject && <RenameDialog project={modalProject} onClose={() => setDialog(null)} onSave={title => { editModalProject(p => ({ ...p, title })); setDialog(null); }} />}
     {dialog?.kind === 'manage' && modalProject && <Modal title={modalProject.title} subtitle="整理这个创意，随时回来继续。" onClose={() => setDialog(null)}><div className="manage-actions"><button type="button" onClick={() => setDialog({ kind: 'rename', projectId: modalProject.id })}><Icon name="edit" /><span>修改项目名称</span><Icon name="arrow" size={16} /></button><button type="button" onClick={() => setDialog({ kind: 'cover', projectId: modalProject.id })}><Icon name="image" /><span>更换封面</span><Icon name="arrow" size={16} /></button><button type="button" className="subtle-danger" onClick={() => deleteProject(modalProject)}><Icon name="trash" /><span>删除项目</span><small>删除后可短暂撤销</small></button></div></Modal>}
     {dialog?.kind === 'cover' && modalProject && <CoverDialog project={modalProject} edit={editModalProject} onClose={() => setDialog(null)} notice={notice} flush={store.flush} />}
     {dialog?.kind === 'unavailable' && <Modal title={`${dialog.action}尚未接入`} subtitle="此操作的生成服务将在后续接入；文字、图像、视频和网站流程已提供服务入口。" onClose={() => setDialog(null)}><div className="service-placeholder"><span className="empty-symbol"><Icon name="spark" size={28} /></span><p>你可以继续编辑文字、整理参考图片和暂存项目。此操作没有发起生成请求，也没有产生费用。</p></div><div className="modal-actions"><Button variant="secondary" onClick={() => setDialog({ kind: 'settings' })}>查看服务状态</Button><Button onClick={() => setDialog(null)}>继续创作</Button></div></Modal>}
-    {dialog?.kind === 'settings' && <Modal title="工作台设置" subtitle="把技术细节留在这里，让创作过程保持简单。" onClose={()=>setDialog(null)}><GenerationServiceStatus/><div className="settings-section"><h3>项目与文件</h3><p>项目、图片、视频、音频及网站文件保存到本机服务的数据目录。同一服务下可以换浏览器继续；旧浏览器草稿保留原副本。</p>{store.note&&<p>{store.note}</p>}<WorkspaceRecovery/><StorageActions workspace={store.workspace} change={store.change} notice={notice}/></div><div className="modal-actions"><Button onClick={()=>setDialog(null)}>返回工作台</Button></div></Modal>}
+    {dialog?.kind === 'settings' && <Modal title="工作台设置" subtitle="把技术细节留在这里，让创作过程保持简单。" onClose={()=>setDialog(null)}><GenerationServiceStatus focusTexture={dialog.section === 'texture'}/><div className="settings-section"><h3>项目与文件</h3><p>项目、图片、视频、音频及网站文件保存到本机服务的数据目录。同一服务下可以换浏览器继续；旧浏览器草稿保留原副本。</p>{store.note&&<p>{store.note}</p>}<WorkspaceRecovery/><StorageActions workspace={store.workspace} change={store.change} notice={notice}/></div><div className="modal-actions"><Button onClick={()=>setDialog(null)}>返回工作台</Button></div></Modal>}
     {dialog?.kind === 'help' && <Modal title="功能与操作说明" subtitle="先看清能做什么，再按作品目标开始。" onClose={() => setDialog(null)} wide><WorkflowHelp project={project} notice={notice} onSettings={() => setDialog({kind:'settings'})}/><div className="modal-actions"><Button onClick={() => setDialog(null)}>明白了，继续创作</Button></div></Modal>}
 
     {toast && <div className="toast" role="status"><Icon name="check" /><span>{toast.message}</span>{toast.undo && <button type="button" onClick={() => { toast.undo?.(); setToast(null); }}>撤销</button>}<button type="button" className="icon-button" aria-label="关闭提示" onClick={() => setToast(null)}><Icon name="close" size={15} /></button></div>}
@@ -149,12 +153,12 @@ export default function Workbench() {
 function NewProjectDialog({ initialType = 'undecided', onClose, onCreate }: { initialType?: WorkType; onClose: () => void; onCreate: (idea: string, type: WorkType, title: string) => void }) {
   const [idea, setIdea] = useState(''); const [title, setTitle] = useState(''); const [type, setType] = useState<WorkType>(initialType);
   const guide = WORK_GUIDES[type];
-  return <Modal title="开始一个创作项目" subtitle={type==='website'?'写一次目标，自动准备资料并开始网站制作。':'选作品目标，再写下你的想法。'} onClose={onClose} wide><form onSubmit={event => { event.preventDefault(); if (idea.trim()) onCreate(idea, type, title); }}>
-    <Field label="1. 这次想做什么？" group><div className="type-options goal-options">{TYPE_ORDER.filter(key=>['novel','video','website'].includes(key)||key===type).map(key => <button type="button" key={key} aria-pressed={type === key} onClick={() => setType(key)}><Icon name={typeIcons[key]} size={17}/><span>{WORK_GUIDES[key].title}</span></button>)}</div></Field>
+  return <Modal title="开始一个创作项目" subtitle={type==='website'?'写一次目标，自动准备资料并开始网站制作。':type==='craft'?'描述一种器物或建筑，开始生成可预览、可下载的三维资产。':'选作品目标，再写下你的想法。'} onClose={onClose} wide><form onSubmit={event => { event.preventDefault(); if (idea.trim()) onCreate(idea, type, title); }}>
+    <Field label="1. 这次想做什么？" group><div className="type-options goal-options">{TYPE_ORDER.filter(key=>['novel','video','website','craft'].includes(key)||key===type).map(key => <button type="button" key={key} aria-pressed={type === key} onClick={() => setType(key)}><Icon name={typeIcons[key]} size={17}/><span>{WORK_GUIDES[key].title}</span></button>)}</div></Field>
     <div className="new-project-route"><strong>你会得到：{guide.output}</strong><p>{guide.route}</p><small>{guide.boundary}</small></div>
     <Field label="2. 写下你的想法"><textarea autoFocus required rows={3} maxLength={4000} value={idea} placeholder={guide.example} onChange={event => setIdea(event.target.value)}/></Field>
     <details className="new-project-name"><summary>项目名称（选填）</summary><Field label="项目名称"><input value={title} maxLength={80} placeholder="留空时使用想法的前几个字" onChange={event => setTitle(event.target.value)}/></Field></details>
-    <div className="modal-actions"><Button variant="ghost" onClick={onClose}>取消</Button><Button type="submit" disabled={!idea.trim()}>{type==='website'?'开始制作网站':'创建并确定创意'}<Icon name="arrow"/></Button></div>
+    <div className="modal-actions"><Button variant="ghost" onClick={onClose}>取消</Button><Button type="submit" disabled={!idea.trim()}>{type==='website'?'开始制作网站':type==='craft'?'开始生成资产':'创建并确定创意'}<Icon name="arrow"/></Button></div>
   </form></Modal>;
 }
 

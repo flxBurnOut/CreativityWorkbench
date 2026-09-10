@@ -1,4 +1,4 @@
-当前更新：协议 **10**、**29** 个工具、Skills **0.7.0**。新增一次目标与网站连续制作，见 [使用流程重整](RESULT_STUDIO_2026-09-10.md)。图片结果与选用同步详见 [图片同步修复与验收](IMAGE_RESULT_SYNC_2026-09-10.md)。主题视觉素材与正文/媒体交接见 [文旅优化与验收](TOURISM_WORKFLOW_2026-09-10.md)。使用新包前重启旧 Runtime，再在 WorkBuddy 中实际复测。下方带日期的历史结果不代表本次加载通过。
+当前更新：协议 **13**、**31** 个工具、Skills **0.10.0**。已有器皿通过 `craft_generate` 的 `textureOf` + `textureMode=image` 复用现有生图服务，本机贴合外壁；不需要 HY/COS。WorkBuddy 对话使用 `dispatch=conversation`，在原任务回传 PNG，再查询到 Blender/GLB 完成。详见[平面图案说明](CRAFT_PATTERN_2026-09-10.md)。旧 HY 路径及 COS 配置见[文化纹理说明](CRAFT_TEXTURE_2026-09-10.md)。使用新包前重启旧 Runtime，再在 WorkBuddy 中实际复测。下方带日期的历史结果不代表本次加载通过。
 
 # WorkBuddy 核心 Skills 与 MCP 接入
 

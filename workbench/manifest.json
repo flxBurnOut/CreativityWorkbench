@@ -7,8 +7,10 @@
       "transport": "http",
       "endpoint": "/v1/creative/brief",
       "method": "POST",
-      "provider": "deepseek",
-      "model": "deepseek-v4-flash",
+      "provider": "openai-compatible",
+      "model": "TEXT_API_MODEL",
+      "defaultModel": "deepseek-v4-flash",
+      "settings": ["TEXT_API_BASE_URL", "TEXT_API_MODEL"],
       "requires": [
         "DEEPSEEK_API_KEY"
       ],
@@ -27,8 +29,10 @@
         "objects",
         "novel"
       ],
-      "provider": "deepseek",
-      "model": "deepseek-v4-flash",
+      "provider": "openai-compatible",
+      "model": "TEXT_API_MODEL",
+      "defaultModel": "deepseek-v4-flash",
+      "settings": ["TEXT_API_BASE_URL", "TEXT_API_MODEL"],
       "requires": [
         "DEEPSEEK_API_KEY"
       ],
@@ -151,7 +155,9 @@
         "theme_asset_apply",
         "image_select",
         "website_run",
-        "website_complete"
+        "website_complete",
+        "craft_generate",
+        "craft_complete_plan"
       ],
       "skills": [
         "workbench/skills/creativity-project",
@@ -159,8 +165,8 @@
       ],
       "configuration": "npm run workbench:setup",
       "validation": "local-continuous-website-tests; WorkBuddy-client-retest-required",
-      "protocolVersion": 10,
-      "skillVersion": "0.7.0"
+      "protocolVersion": 13,
+      "skillVersion": "0.10.0"
     },
     {
       "id": "service-settings",
@@ -242,6 +248,38 @@
       "endpoint": "/v1/core/image_select",
       "protocolVersion": 9,
       "validation": "local-runtime-http-and-browser-tested; remote-WorkBuddy-client-retest-required"
+    },
+    {
+      "id": "craft-model",
+      "name": "一句需求生成三维器具与建筑资产",
+      "transport": "http-core",
+      "endpoint": "/v1/core/craft_generate",
+      "completion": "/v1/core/craft_complete_plan",
+      "taskKind": "craft-model",
+      "formats": ["blend", "glb"],
+      "preview": "read-only-webgl",
+      "protocolVersion": 13,
+      "requires": ["local Blender executable"],
+      "planner": "configured DeepSeek or one existing-task WorkBuddy plan handoff",
+      "scope": "单件器具、器皿、简化骑楼和建筑构件；内置规则构造 Mesh，自动同步网页，不提供直接编辑或任意脚本执行",
+      "resourceLimits": {"blenderProcesses": 1, "fileMiB": 32, "memoryMiB": 1024, "timeoutSeconds": 180},
+    "validation": "local-Blender-runtime-http-preview-download-tested; cloud-texture-mock-and-local-packaging-tested; live-COS-TokenHub-texture-and-WorkBuddy-retest-required",
+    "patternEnhancement": {
+      "arguments": {"textureOf": "existing craft taskId", "textureMode": "image"},
+      "providers": ["workbuddy", "external image API"],
+      "completion": "task_complete_handoff original PNG then local Blender",
+      "textureSize": 1024,
+      "scope": "规则器皿外壁平面图案；保留内壁、附件、几何与历史，不需 HY/COS",
+      "requires": ["local Blender", "existing image generation or manual WorkBuddy handoff"],
+      "validation": "local Blender and runtime tests; actual WorkBuddy generation requires retest"
+    },
+    "textureEnhancement": {
+      "argument": "textureOf",
+      "model": "hy-3d-texture",
+      "textureSize": 1024,
+      "scope": "颜色贴图；保留原网格，生成新版 Blender/GLB",
+      "requires": ["Token Hub credential", "private COS temporary bucket and scoped credential"]
+    }
     },
     {
       "id": "website-studio",

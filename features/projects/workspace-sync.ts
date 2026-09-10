@@ -26,6 +26,17 @@ function mergeWebsiteDraft(before:Project|undefined,mine:Project|undefined,their
   return {...theirs,websiteEdit:mine.websiteEdit,stage:mine.stage};
 }
 
+function mergeCraftDraft(before:Project|undefined,mine:Project|undefined,theirs:Project|undefined) {
+  if(!before||!mine||!theirs||[before,mine,theirs].some(p=>p.type!=='craft'))return;
+  const withoutDraft=(p:Project)=>comparable({...p,craftGoal:undefined});
+  if(!equal(withoutDraft(before),withoutDraft(mine)))return;
+  const goal=(p:Project)=>p.craftGoal??p.craftRequest?.goal??p.idea;
+  // Receiving a file or recording the submitted request is independent of
+  // typing the next requirement; two people changing the draft still conflict.
+  if(goal(before)!==goal(theirs)&&goal(mine)!==goal(theirs))return;
+  return {...theirs,craftGoal:mine.craftGoal,stage:mine.stage};
+}
+
 /** Preserve remote changes; an overlapping local edit becomes a separate, visible project. */
 export function reconcileWorkspace(base: Workspace, local: Workspace, remote: Workspace, newId: () => string = () => crypto.randomUUID()) {
   const projects: Project[] = [];
@@ -40,7 +51,7 @@ export function reconcileWorkspace(base: Workspace, local: Workspace, remote: Wo
     const remoteChanged = !equal(comparable(before), comparable(theirs));
     if (!localChanged) { if (theirs) projects.push({ ...theirs, stage: mine?.stage ?? theirs.stage }); continue; }
     if (!remoteChanged || equal(comparable(mine), comparable(theirs))) { if (mine) projects.push(mine); continue; }
-    const withDraft=mergeWebsiteDraft(before,mine,theirs);
+    const withDraft=mergeWebsiteDraft(before,mine,theirs)||mergeCraftDraft(before,mine,theirs);
     if(withDraft){projects.push(withDraft);continue;}
     if (theirs) projects.push(theirs);
     if (theirs && !mine) preservedRemovals.push(theirs.title);

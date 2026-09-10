@@ -10,6 +10,8 @@ import {unzipSync,strFromU8,zipSync,strToU8} from 'fflate';
 import {createRepository} from '../lib/workbench/repository.mjs';
 import {createTaskManager} from '../lib/workbench/tasks.mjs';
 import {createCoreService} from '../lib/workbench/core-service.mjs';
+import {CORE_PROTOCOL} from '../lib/workbench/protocol.mjs';
+import {coreTools} from '../lib/workbench/core-contract.mjs';
 import {createProject} from '../lib/workbench/project-core.mjs';
 import {themeAssets,applyThemeAssets} from '../lib/workbench/theme-assets.mjs';
 import {switchWorkType,inheritWorkType,selectedTransfers,transferChanges} from '../lib/workbench/workflow.mjs';
@@ -92,7 +94,7 @@ test('real stdio MCP selects theme art, transfers full text, prepares files and 
   const client=new Client({name:'tourism-acceptance',version:'1'});const transport=new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../scripts/workbench-mcp.mjs',import.meta.url))],cwd:directory,env:{WORKBENCH_RUNTIME_URL:'http://127.0.0.1:'+runtime.address().port,WORKBENCH_DATA_DIR:directory},stderr:'pipe'});
   t.after(async()=>{await client.close();await new Promise(r=>runtime.close(r));await rm(directory,{recursive:true,force:true,maxRetries:5});});await client.connect(transport);
   const call=async(name,args)=>{const result=await client.callTool({name,arguments:args});assert.ok(!result.isError,JSON.stringify(result));return JSON.parse(result.content[0].text);};
-  assert.equal((await call('workbench_status',{})).coreProtocol,10);assert.equal((await client.listTools()).tools.length,29);
+  assert.equal((await call('workbench_status',{})).coreProtocol,CORE_PROTOCOL);assert.deepEqual((await client.listTools()).tools.map(tool=>tool.name).sort(),Object.keys(coreTools).sort());
   let receipt=await call('project_create',{requestId:uid(),idea:'从正文到文化网站',type:'novel'});const projectId=receipt.projectId;
   const mutate=async(name,rest)=>receipt=await call(name,{projectId,expectedVersion:receipt.projectVersion,requestId:uid(),...rest});
   await mutate('project_update',{patch:{novel:{title:'原文',text:'只在正文出现的完整句子 STDIO_BODY',taskId:'authored'}}});await mutate('project_update',{patch:{type:'website'}});

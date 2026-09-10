@@ -6,7 +6,7 @@ export const WORK_GUIDES: Record<WorkType, { title: string; description: string;
   novel: { title: '写一篇故事', description: '从想法整理人物、情节与背景，再创作和修改短篇正文。', output: '短篇正文 · TXT / Markdown', route: '确定创意 → 整理故事 → 创作正文 → 下载', boundary: '配图可选；目前支持短篇，长篇编排尚未实现。', example: '写一个发生在当代岭南街巷的短篇，一把旧葵扇串起两代人的回忆。' },
   video: { title: '做一段视频', description: '描述一个镜头，可选一张参考图，生成、修改并下载视频。', output: '单镜头视频 · MP4', route: '确定画面 → 可选参考图 → 生成镜头 → 下载', boundary: '单镜头 2–10 秒；可展开配音、多镜头合成等进阶操作。', example: '一个 5 秒连续镜头：雨后的岭南骑楼下，一位年轻人收起葵扇，镜头缓慢拉远。' },
   website: { title: '做一个网站', description: '描述一次目标，自动准备资料；收到网站初稿后直接预览与修改。', output: '网站源码 ZIP · 静态页面预览', route: '描述目标 → 制作网站 → 查看与交付', boundary: 'WorkBuddy 负责实际制作，源码自动回传；未连接自动发送时需复制一次交接请求。发布另行处理。', example: '为岭南手作做一个文化专题网站，展示作品与文化依据，支持按作品类别筛选。' },
-  craft: { title: '准备 3D 文创设计', description: '整理形体、材质、文化依据和概念参考，交付三维制作前期资料。', output: '设计说明与参考图片 · ZIP', route: '确定设计 → 整理形体 → 准备参考 → 导出资料', boundary: '当前只做前期资料，不生成 3D 模型、拓扑或纹理。', example: '以葵扇为灵感整理一件三维文创的形体、材质和参考图，先交付设计资料。' },
+  craft: { title: '生成 3D 文创资产', description: '一句话生成器物或建筑，直接旋转查看并下载三维网格资产。', output: 'Blender 文件 · GLB 模型', route: '描述资产 → 生成与检查 → 网页查看与下载', boundary: '支持规则形体器具与特色建筑外观；不含直接编辑、复杂雕刻或写实文物复原。需要本机 Blender，未配置文字服务时交给 WorkBuddy 解析。', example: '生成一只岭南凉茶陶碗，宽口浅腹、收窄底部，深褐色釉面，保留碗内空间，适合文旅网站展示。' },
   undecided: { title: '先整理一个想法', description: '保存创意与资料，确定作品形式后再继续。', output: '创作资料包 · ZIP', route: '记录想法 → 整理资料 → 选择作品类型', boundary: '可随时切换作品类型，原类型草稿会保留。', example: '围绕岭南手艺人与街巷生活整理创意，作品形式稍后决定。' },
 };
 
@@ -18,6 +18,7 @@ export function hasStageDraft(project: Project, stage: number): boolean {
   if (project.type === 'novel') return Boolean(project.novel?.text.trim());
   if (project.type === 'video') return Boolean(project.video?.final || project.video?.shots.some(shot => shot.clip));
   if (project.type === 'website') return Boolean(project.websiteSource || project.website?.zipFileId);
+  if (project.type === 'craft') return Boolean(project.craftAsset || project.designPackage);
   return Boolean(project.designPackage);
 }
 
@@ -49,5 +50,6 @@ export function taskMatchesStep(project: Project, task: { kind: string; args: Re
 }
 
 export function workBuddyRequest(project: Project) {
+  if(project.type==='craft')return `请使用创意工作台 Skills 和 MCP 继续项目 ${JSON.stringify(project.title)}（项目 ID：${project.id}）的三维资产制作。先读取项目与现有任务；如有未完成 craft-model 任务，必须沿用原任务与交接要求回传造型方案，不要另建任务。目标：${project.craftGoal||project.craftRequest?.goal||project.idea}。模型由工作台通过 Blender 生成，完成后在网页查看并下载 .blend / .glb；不要将造型方案或图片当作模型交付。`;
   return `请通过创意工作台的 MCP 和 Skills 继续项目 ${JSON.stringify(project.title)}（项目 ID：${project.id}）。先检查连接并读取最新项目，不要新建同名副本。\n当前作品：${WORK_GUIDES[project.type].title}；当前步骤：${FLOW_LABELS[project.stage]}。\n${stageInstruction(project).action}\n沿用项目已保存的文化依据、内容与实际素材。先说明准备做什么，再按我的要求完成、保存并交付；需要我做审美选择时展示候选。不要把任务包、概念图或待执行请求当成已完成的成品。`;
 }

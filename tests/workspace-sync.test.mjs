@@ -73,3 +73,22 @@ test('two people editing the website instruction still retain both conflicting d
   assert.equal(result.copies.length,1);assert.equal(result.workspace.projects[0].websiteEdit.change,'另一端要求');
   assert.equal(result.workspace.projects[1].websiteEdit.change,'本机要求');
 });
+
+test('incoming 3D result and next requirement stay in the original project without a conflict copy',()=>{
+  const p={...createProject('白色陶碗','craft','','p'),craftRequest:{taskId:'current',goal:'白色陶碗',requestedAt:1}};
+  const mine={...p,craftGoal:'下一轮蓝釉，保留内壁'};
+  const theirs={...p,craftGoal:'白色陶碗',craftAsset:{taskId:'current',blendFileId:'blend',glbFileId:'glb'}};
+  const result=reconcileWorkspace(workspace(p),workspace(mine),workspace(theirs));
+  assert.equal(result.copies.length,0);assert.equal(result.workspace.projects.length,1);
+  assert.equal(result.workspace.projects[0].craftGoal,mine.craftGoal);
+  assert.deepEqual(result.workspace.projects[0].craftAsset,theirs.craftAsset);
+  assert.equal(result.workspace.activeProjectId,'p');
+});
+
+test('two people editing a craft requirement retain both distinct drafts',()=>{
+  const p={...createProject('白色陶碗','craft','','p'),craftGoal:'白色陶碗'};
+  const result=reconcileWorkspace(workspace(p),workspace({...p,craftGoal:'本机蓝釉'}),workspace({...p,craftGoal:'另一端红釉'}),()=> 'copy');
+  assert.equal(result.copies.length,1);
+  assert.equal(result.workspace.projects[0].craftGoal,'另一端红釉');
+  assert.equal(result.workspace.projects[1].craftGoal,'本机蓝釉');
+});
