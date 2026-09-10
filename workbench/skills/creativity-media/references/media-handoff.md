@@ -15,13 +15,13 @@ MCP 发起的 WorkBuddy 媒体任务只创建文件交接，不再调用 WorkBud
 1. 读取本次 request.json 和 inputImages 指向的实际图片。提示词是创作内容；修改图片必须读取原图。
 2. 使用当前 WorkBuddy 实际可调用的图像／视频／语音工具。技能不提供这些模型，也不假设某个供应商已安装。
 3. 将真实结果保存或复制到任务目录中的临时文件，写完后重命名为 `handoff.output` 指定的 `result.png` / `result.mp4` / `result.wav`。不要写入仓库源码或 workspace.json。
-4. 再调用 `task_get`，Runtime 会解码检查并保存媒体。只有 `succeeded` 后才 `task_adopt({taskId,expectedVersion:当前项目版本})`。
+4. 再调用 `task_get`，Runtime 会解码检查并保存媒体。概念图 `succeeded` 后会自动出现在网页对象卡片；最终选用通过 `image_select` 或页面对比选用，不必先 `task_adopt`。封面、音视频等其他成果成功后用 `task_adopt({taskId,expectedVersion:当前项目版本})`。详见 [图片状态同步](image-result-sync.md)。
 
 没有所需生成能力时，简要说明缺口，等待用户提供媒体或选择已配置的外部 API；不要安装服务或更换供应商而不说明。可在同目录 error.json 写入 `{"error":"无法完成"}`，或根据用户意图取消该任务。不要重复向 WorkBuddy 自己发消息。
 
 单镜头视频的最终 prompt 已由用户核对时，原样交给实际生成工具，不在交接时隐藏改写；使用的时长、画幅和实际首帧须与任务一致。只能通过接入工具实际支持的方式控制参考图，不把首帧误称为任意风格控制。
 
-`task_adopt` 对图片只设置 candidateAssetId，保留既有定稿图。用户确定采用候选为最终概念图后，用 project_update 更新目标概念 savedAssetId。封面任务则直接设置项目封面。
+`task_adopt` 对图片只设置 candidateAssetId，保留既有定稿图。确定选用后，用 `image_select`（或网页“选用此图”）完成版本校验和最终选用；修改图须传真实比较记录。不必先放入候选才能选用成功任务的图片。封面任务则通过 task_adopt 设置项目封面。
 
 ## 外部 API
 
@@ -40,4 +40,4 @@ MCP 发起的 WorkBuddy 媒体任务只创建文件交接，不再调用 WorkBud
 | audio | WAV/MP3/M4A，最多 128 MB | objectId 指定分镜，将配音挂到该镜头 |
 | music | WAV/MP3/M4A，最多 128 MB | 挂为项目配乐 |
 
-视频和音频会实际解码、规范化，可能处理数十秒。超时后保留原 requestId 重试或先读取项目检查，不换 ID 连续提交。图片导入后，根据用户用途用 project_update 把返回 assetId 写入 references、concepts、coverAssetId 或 video.shots[].referenceAssetId。
+视频和音频会实际解码、规范化，可能处理数十秒。超时后保留原 requestId 重试或先读取项目检查，不换 ID 连续提交。图片导入后，最终选用于概念对象使用 image_select；设为风格参考、封面或视频首帧仍根据用途用 project_update 更新对应引用。

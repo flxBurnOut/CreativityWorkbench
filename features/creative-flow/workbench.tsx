@@ -83,7 +83,7 @@ export default function Workbench() {
     else store.change(ws => updateProject(ws, project.id, update));
   };
   const goToStage = (stage: number) => { edit(p => ({ ...p, stage })); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const generation = useGeneration(project,isDemo,edit,notice,store.flush);
+  const generation = useGeneration(project,isDemo,edit,notice,store.flush,store.synchronize);
   const creative = { controls: {run:(action:'improve'|'redirect'|'revise')=>generation.controls.run('creative',{action}),busy:generation.controls.busy} };
   const unavailable = (action: string) => setDialog({ kind: 'unavailable', action });
   const saveLabels = { loading: '正在读取项目', saved: '已保存到本机服务', saving: '正在保存…', error: '保存未完成', temporary: '临时体验 · 关闭后不保留' };

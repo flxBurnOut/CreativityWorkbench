@@ -90,5 +90,6 @@ test('atomic handoff publication never replaces another result, even under concu
   const repo=createRepository(directory);const handoff=await repo.handoff('original','test',[]);const blue=await png('blue');const red=await png('red');
   const result=await Promise.allSettled([repo.completeImageHandoff('original',blue),repo.completeImageHandoff('original',red)]);
   assert.equal(result.filter(r=>r.status==='fulfilled').length,1);assert.equal(result.find(r=>r.status==='rejected').reason.code,'handoff_conflict');
-  assert.deepEqual(await readFile(handoff.output),blue);assert.equal((await repo.completeImageHandoff('original',blue)).alreadyWritten,true);
+  const winner=[blue,red][result.findIndex(r=>r.status==='fulfilled')];
+  assert.deepEqual(await readFile(handoff.output),winner);assert.equal((await repo.completeImageHandoff('original',winner)).alreadyWritten,true);
 });

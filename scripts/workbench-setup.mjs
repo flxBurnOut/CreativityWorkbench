@@ -18,6 +18,8 @@ for (const name of names) {
   if(name!=='creativity-project')await writeFile(join(skills,name,'references','continuous-workflow.md'),await readFile(join(skills,'creativity-project','references','continuous-workflow.md')));
   if(name!=='creativity-project')await writeFile(join(skills,name,'references','acceptance.md'),await readFile(join(skills,'creativity-project','references','acceptance.md')));
   if(name!=='creativity-project')await writeFile(join(skills,name,'references','existing-handoff.md'),await readFile(join(skills,'creativity-project','references','existing-handoff.md')));
+  if(name!=='creativity-project')await writeFile(join(skills,name,'references','tourism-website.md'),await readFile(join(skills,'creativity-project','references','tourism-website.md')));
+  if(name!=='creativity-project')await writeFile(join(skills,name,'references','image-result-sync.md'),await readFile(join(skills,'creativity-project','references','image-result-sync.md')));
   await writeFile(join(skills,name,'references','lingnan-knowledge.md'), '# 岭南知识资料\n\n版本 '+currentKnowledge.version+'。'+currentKnowledge.scope+'\n\n从 knowledge_search 搜索、knowledge_apply 选择；本参考不意味着全部条目已被加入项目。\n\n'+knowledgeText({knowledge:currentKnowledge.entries.map(e=>({id:e.id,version:currentKnowledge.version}))}));
   const files = {};
   async function collect(directory) {

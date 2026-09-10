@@ -14,7 +14,7 @@
 
 修改要求写清位置、变化和可见程度，保留原图。采用生成任务只放入候选，不代表视觉验收通过。对照 parentAssetId 原图与候选，先看整体，再看相同局部，核对修改是否清晰且应保留的主体、构图、风格是否正确。文件哈希不同不能证明修改有效。
 
-需要用户判断时展示对比。确认选用后，读取完整 concepts 数组，仅更新目标 savedAssetId，并可写 imageReview：assetId、parentAssetId、changesVisible、preserved、notes、checkedAt（毫秒时间戳）。记录真实观察，不伪造用户确认或效果。页面提供同步放大和确认记录；不满意时保留候选和原定稿，不为完成验收自动追加付费生成。
+需要用户判断时展示对比。确认选用后，读取最新项目版本，用 image_select 传 objectId、原 taskId（或已有 assetId）、expectedVersion、requestId 以及 review：assetId、parentAssetId、changesVisible、preserved、notes、checkedAt（毫秒时间戳）。记录真实观察，不伪造用户确认或效果。页面提供相同的对比选用流程，无需 WorkBuddy 额外 task_adopt。详见 [图片状态同步](image-result-sync.md)。不满意时保留候选和原定稿，不为完成验收自动追加付费生成。
 
 ## 视频
 

@@ -11,13 +11,14 @@ import type { GenerationTask } from './task-results';
 import {ReferencePicker,InputSummary,WebsiteSourcePanel} from './workflow-panel';
 import {CONTENT_SECTIONS} from '@/features/projects/model';
 import {videoSpec} from '@/lib/workbench/media-validation.mjs';
-import {assetChanges} from '@/lib/workbench/workflow.mjs';
+import {ThemeAssetsPanel} from './theme-assets-panel';
+import {assetChanges,selectedTransfers,transferredMedia} from '@/lib/workbench/workflow.mjs';
 
 type Props={project:Project;edit:EditProject;generation?:GenerationControls;notice:Notice};
 const emptyVideo=():VideoDraft=>({ratio:'16:9',shots:[],keepAudio:false,burnSubtitles:true});
 function DownloadFile({fileId,name,children}:{fileId:string;name:string;children:React.ReactNode}) {
-  const[busy,setBusy]=useState(false);const[error,setError]=useState('');
-  return <><a href={outputUrl(fileId)} download={name} aria-disabled={busy} onClick={async event=>{event.preventDefault();if(busy)return;setBusy(true);setError('');try{const response=await fetch(outputUrl(fileId),{signal:AbortSignal.timeout(240000)});if(!response.ok)throw new Error('文件下载失败，请稍后重试。');const url=URL.createObjectURL(await response.blob());const anchor=document.createElement('a');anchor.href=url;anchor.download=name;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}catch(e){setError(e instanceof Error?e.message:'下载未完成。');}finally{setBusy(false);}}}>{busy?'正在读取文件…':children}</a>{error&&<p role="alert">{error}</p>}</>;
+  // Let the browser stream downloads to disk instead of retaining a full video Blob.
+  return <a href={outputUrl(fileId)} download={name}>{children}</a>;
 }
 function MediaUpload({label,kind,onUpload,notice}:{label:string;kind:'mp4'|'wav';onUpload:(file:MediaFile)=>void;notice:Notice}) {
   const input=useRef<HTMLInputElement>(null);const[busy,setBusy]=useState(false);
@@ -34,7 +35,7 @@ export function OutputTaskPreview({task}:{task:GenerationTask}) {
     {r.warnings?.map((warning,index)=><p key={index} role="status">{warning}</p>)}
     {r.videoPlan&&<Field label="分镜结果预览"><textarea readOnly rows={8} value={r.videoPlan.shots.map((s,i)=>`${i+1}. ${s.title} · ${s.duration} 秒\n画面：${s.visual}\n运镜：${s.camera}\n旁白：${s.narration||'无'}\n字幕：${s.subtitle||'无'}`).join('\n\n')}/></Field>}
     {file?.validation&&<p role="status">规格检查：{file.validation.status==='passed'?'通过':file.validation.status==='failed'?'未通过':'未验证'} · 实际 {file.width}×{file.height} / {file.duration.toFixed(2)} 秒。{file.validation.issues.join(' ')}</p>}
-    {file&&<div className="media-result"><video controls preload="metadata" src={outputUrl(file.fileId)} aria-label="生成视频预览"/><DownloadFile fileId={file.fileId} name="创意视频.mp4">下载 MP4</DownloadFile>{r.videoFinal&&<DownloadFile fileId={r.videoFinal.subtitleFileId} name="字幕.srt">下载字幕 SRT</DownloadFile>}</div>}
+    {file&&<div className="media-result"><video controls preload="none" src={outputUrl(file.fileId)} aria-label="生成视频预览"/><DownloadFile fileId={file.fileId} name="创意视频.mp4">下载 MP4</DownloadFile>{r.videoFinal&&<DownloadFile fileId={r.videoFinal.subtitleFileId} name="字幕.srt">下载字幕 SRT</DownloadFile>}</div>}
     {r.videoAudio&&<div className="media-result"><audio controls src={outputUrl(r.videoAudio.fileId)}/><DownloadFile fileId={r.videoAudio.fileId} name="旁白.wav">下载旁白</DownloadFile></div>}
     {r.website&&<><p>网站包含 {r.website.spec.pages.map(p=>p.title).join('、')}。</p>{r.website.spec.limitations.length>0&&<p role="status">尚未实现的要求：{r.website.spec.limitations.join('；')}</p>}<details><summary>预览新网站</summary>{r.website.previewFileId&&<WebsitePreview fileId={r.website.previewFileId}/>}</details>{r.website.zipFileId&&<DownloadFile fileId={r.website.zipFileId} name="网站源码.zip">下载网站源码与素材 ZIP</DownloadFile>}</>}
     {r.websiteRequest&&<><p>网站提示词与素材包已准备；网站实现与功能验证由执行模型完成。</p><details><summary>任务包中的实际提示词</summary><textarea readOnly rows={8} aria-label="已准备的网站提示词" value={r.websiteRequest.prompt}/></details>{r.websiteRequest.bundleFileId&&<DownloadFile fileId={r.websiteRequest.bundleFileId} name="网站生成任务与素材.zip">下载网站生成任务包</DownloadFile>}</>}
@@ -102,7 +103,7 @@ export function VideoOutput({project,edit,generation,notice}:Props) {
           <Button disabled={generation?.busy||!s.visual.trim()||!prompt.trim()||stale||tooLong} onClick={()=>generation?.run('video-shot',{objectId:s.id,provider})}>{s.clip?'重新生成此镜头':'生成此镜头'}</Button>
           <MediaUpload label="导入这个镜头的 MP4" kind="mp4" notice={notice} onUpload={file=>shotEdit(s.id,current=>({...current,clip:{...file,source:shotSource(s,video.ratio,{...project,video})}}))}/>
         </div>
-        {s.clip&&<><video className="shot-player" controls preload="metadata" src={outputUrl(s.clip.fileId)} aria-label={'镜头 '+(i+1)+' 预览'}/><p className="muted">实际 {s.clip.width||'?'}×{s.clip.height||'?'} · {s.clip.duration.toFixed(2)} 秒 · 规格{videoSpec(s.clip,video.ratio,s.duration).status==='passed'?'通过':videoSpec(s.clip,video.ratio,s.duration).status==='failed'?'未通过':'未验证'}{s.clip.source!==shotSource(s,video.ratio,project)?' · 依据已改变或属于旧版记录；旧文件保留，请核对后重生成或重新导入。':''}</p><DownloadFile fileId={s.clip.fileId} name="视频镜头.mp4">下载这个镜头</DownloadFile></>}
+        {s.clip&&<><video className="shot-player" controls preload="none" src={outputUrl(s.clip.fileId)} aria-label={'镜头 '+(i+1)+' 预览'}/><p className="muted">实际 {s.clip.width||'?'}×{s.clip.height||'?'} · {s.clip.duration.toFixed(2)} 秒 · 规格{videoSpec(s.clip,video.ratio,s.duration).status==='passed'?'通过':videoSpec(s.clip,video.ratio,s.duration).status==='failed'?'未通过':'未验证'}{s.clip.source!==shotSource(s,video.ratio,project)?' · 依据已改变或属于旧版记录；旧文件保留，请核对后重生成或重新导入。':''}</p><DownloadFile fileId={s.clip.fileId} name="视频镜头.mp4">下载这个镜头</DownloadFile></>}
         <details><summary>声音与字幕（已有工具）</summary>
           <Field label={'镜头 '+(i+1)+' 旁白'}><textarea rows={2} value={s.narration} onChange={e=>shotEdit(s.id,current=>({...current,narration:e.target.value}))}/></Field>
           <Field label={'镜头 '+(i+1)+' 字幕'}><textarea rows={2} value={s.subtitle} onChange={e=>shotEdit(s.id,current=>({...current,subtitle:e.target.value}))}/></Field>
@@ -153,10 +154,11 @@ export function WebsiteOutput({project,edit,generation,notice}:Props) {
     <section className="surface website-preparation" id="website-step-1"><div className="section-heading"><div><h3>1. 确认网站需求</h3><p>已有内容与画风会带入任务，只需补充这次要做什么。</p></div><span className="tag tag-soft">网站</span></div>
       <Field label="网站生成要求"><textarea rows={4} value={project.delivery.notes} placeholder="例如：做一个岭南手作专题站，包含作品展示与文化依据，支持类别筛选。" onChange={e=>edit(p=>({...p,delivery:{...p.delivery,notes:e.target.value}}))}/></Field>
       {(project.websiteSource||project.website||project.requests[4])&&<Field label="本次网站修改要求"><textarea rows={2} value={project.requests[4]} placeholder="写下这次需要改变的部分，其余内容保持。" onChange={e=>edit(p=>({...p,requests:p.requests.map((v,i)=>i===4?e.target.value:v)}))}/></Field>}
-      <details><summary>网站图片 · 已选择 {selected.length} 张（可选）</summary><p className="muted">默认使用已选用的概念图。风格参考不会自动作为网站内容；勾选后才允许使用。</p>
+      <ThemeAssetsPanel project={project} edit={edit} notice={notice}/><details><summary>网站图片 · 已选择 {selected.length} 张（可选）</summary><p className="muted">默认使用已选用的概念图。风格参考不会自动作为网站内容；勾选后才允许使用。</p>
         {project.assets.length?<div className="inline-actions">{project.assets.map(a=><label key={a.id}><input type="checkbox" checked={selected.includes(a.id)} onChange={e=>select(a.id,e.target.checked)}/>{a.name}</label>)}</div>:<p>没有图片也能制作网站。</p>}
         {roles.some(r=>r.role==='style-reference')&&<p className="muted">仅作风格参考：{roles.filter(r=>r.role==='style-reference').map(r=>r.name+'（'+r.purpose+'）').join('；')}</p>}
       </details>
+      {selectedTransfers(project).length>0&&<details><summary>跨媒介资料 · {selectedTransfers(project).length} 类内容 / {transferredMedia(project).length} 个媒体文件</summary><p>完整正文、选中媒体与来源记录会随任务包交付，可直接开始网站制作。</p>{selectedTransfers(project).map(t=><p key={t.from}>{t.from}：{t.novel?'完整正文 '+t.novel.text.length+' 字；':''}{t.media?.length||0} 个媒体文件</p>)}</details>}
       <details open={stale||undefined}><summary>查看或调整完整任务说明</summary><Field label="网站最终生成提示词"><textarea rows={10} value={prompt} onChange={e=>change(e.target.value)}/></Field><p className="muted">将原样交给 WorkBuddy，并附带选定的实际素材。</p><div className="inline-actions"><Button variant="secondary" onClick={()=>change()}>按当前资料重新整理</Button><Button variant="ghost" disabled={stale||!prompt.trim()} onClick={()=>void navigator.clipboard.writeText(prompt).then(()=>notice('已复制提示词；如有图片，请同时提供实际素材包。')).catch(()=>notice('复制失败，请选中文字复制。'))}>复制提示词</Button><Button variant="ghost" disabled={stale||!prompt.trim()} onClick={()=>downloadPrompt(prompt)}>下载提示词 Markdown</Button></div></details>
       {stale&&<div role="status"><p>资料已更新，已有编辑稿保留。请重新整理任务说明，或核对后保留。</p><div className="inline-actions"><Button variant="secondary" onClick={()=>change()}>更新任务说明</Button><Button variant="ghost" onClick={()=>change(undefined,true)}>已核对，保留编辑稿</Button></div></div>}
     </section>

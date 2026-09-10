@@ -8,12 +8,12 @@ export class WorkbenchApiError extends Error {
   code?: string;
   constructor(message: string, status: number, code?: string) { super(message); this.status = status; this.code = code; }
 }
-export async function api<T = Record<string,unknown>>(path: string, method = 'GET', input?: unknown):Promise<T> {
+export async function api<T = Record<string,unknown>>(path: string, method = 'GET', input?: unknown, signal?:AbortSignal):Promise<T> {
   const options = method === 'GET' ? {} : { headers: { 'Content-Type': 'application/json' }, body: input === undefined ? undefined : JSON.stringify(input) };
   let response: Response;
   let data: unknown;
   try {
-    response = await fetch('/api/workbench/data/' + path, { method, cache: 'no-store', ...options, signal: AbortSignal.timeout(30000) });
+    response = await fetch('/api/workbench/data/' + path, { method, cache: 'no-store', ...options, signal: signal?AbortSignal.any([signal,AbortSignal.timeout(30000)]):AbortSignal.timeout(30000) });
     try { data = await response.json(); }
     catch (e) {
       if (e instanceof Error && ['TimeoutError','AbortError'].includes(e.name)) throw e;
@@ -54,7 +54,7 @@ async function serializeAsset(asset: ImageAsset): Promise<ImageAsset> {
 }
 export async function serializeWorkspace(workspace: Workspace): Promise<Workspace> {
   const projects = [];
-  for (const p of workspace.projects) projects.push({ ...p, assets: await Promise.all(p.assets.map(serializeAsset)) });
+  for (const p of workspace.projects) { const assets=[];for(const asset of p.assets)assets.push(await serializeAsset(asset));projects.push({ ...p, assets }); }
   return { ...workspace, projects };
 }
 export async function saveServerWorkspace(workspace: Workspace, expectedRevision: number, writeId: string, onSerialized?:(wire:Workspace)=>void): Promise<number> {

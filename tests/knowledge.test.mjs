@@ -29,7 +29,7 @@ async function until(tasks,id,status='succeeded') {
   throw new Error('task timeout');
 }
 test('curated facts have resolvable source attribution; search respects region and empty results',()=>{
-  assert.equal(currentKnowledge.entries.length,10);
+  assert.equal(currentKnowledge.entries.length,11);
   for(const e of currentKnowledge.entries) {
     assert.ok(e.creativeUses.length&&e.avoid.length&&e.mediaRights);
     for(const f of e.facts){const source=e.sources.find(s=>s.id===f.sourceId);assert.ok(source?.publisher&&source.evidence&&source.accessedAt);assert.equal(new URL(source.url).protocol,'https:');}

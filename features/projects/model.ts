@@ -31,7 +31,7 @@ export interface WebsiteDraft {spec:SiteSpec;builtSpec?:SiteSpec;previewFileId?:
 export interface WebsiteRequest {prompt:string;basis:string;assetIds:string[];bundleFileId?:string;source?:string;taskId?:string}
 export interface WebsiteSource {verificationMethod?:'not-tested'|'static'|'browser'|'user-browser';verificationResult?:'not-tested'|'passed'|'failed';verificationEvidence?:string;fileId:string;entryCount:number;description:string;instructions:string;verification:string;taskId?:string;requestSource?:string;importedAt:number;previewPath?:string}
 export interface FlowRecord {id:string;type:WorkType;target:string;createdAt:number;origin:string;taskId?:string;fingerprint:string;value:any;dependencies:{key:string;label:string;fingerprint:string}[]}
-export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];transfer?:Project['transfer']}
+export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];transfer?:Project['transfer'];transfers?:Project['transfers']}
 export interface Concept {
   id: string; category: Category; name: string; description: string;
   candidateAssetId?: string; savedAssetId?: string; prompt: string; revisionRequest: string;
@@ -39,6 +39,7 @@ export interface Concept {
   imageReview?:ImageReview;
 }
 export interface ImageReview {assetId:string;parentAssetId:string;changesVisible:boolean;preserved:boolean;notes:string;checkedAt:number}
+export interface WorkflowTransfer {version?:number;from:WorkType;content:Record<string,string>;novel?:{title:string;text:string;taskId?:string};media?:{fileId:string;name:string;kind:string;duration?:number;sourceTaskId?:string;sourceObjectId?:string}[];includeContent?:boolean;source:string;note:string}
 export interface Project {
   id: string; title: string; type: WorkType; createdAt: number; updatedAt: number; stage: number;
   idea: string; brief: string; culture: string;
@@ -52,7 +53,7 @@ export interface Project {
   novel?: { title: string; text: string; taskId: string };
   video?:VideoDraft; website?:WebsiteDraft; websiteRequest?:WebsiteRequest;
   websiteSource?:WebsiteSource; websiteSourceCandidate?:WebsiteSource; novelReferenceIds?:string[]; variants?:Partial<Record<WorkType,TypeBranch>>;
-  transfer?:{from:WorkType;content:Record<string,string>;source:string;note:string};
+  transfer?:WorkflowTransfer;transfers?:WorkflowTransfer[];
   flow?:{version:1;records:FlowRecord[]}; designPackage?:{fileId:string;source:string;taskId:string};
 }
 export interface Workspace { projects: Project[]; activeProjectId: string | null }

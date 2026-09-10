@@ -55,6 +55,32 @@ async function setup(t) {
 const site = () => ({ title: '岭南手艺', description: '用户提供的资料', accent: '#35765d', theme: 'paper', pages: [{ id: 'home', title: '首页', intro: '骑楼下', sections: [{ kind: 'text', title: '说明', body: '真实保存的文案', items: [] }] }], limitations: [] });
 const video = () => ({ ratio: '16:9', burnSubtitles: false, keepAudio: false, shots: [{ id: 'shot-a', title: '街巷', visual: '日光移动', camera: '推进', duration: 2, narration: '街巷', subtitle: '街巷', revision: '' }] });
 
+test('real stdio: image_select uses the original handoff result, validates comparison and synchronizes selected state',async t=>{
+  const {call,until,client}=await setup(t);
+  assert.ok((await client.listTools()).tools.some(tool=>tool.name==='image_select'));
+  const created=await call('project_create',{requestId:uid(),idea:'改图选用同步','type':'website'}),projectId=created.projectId;
+  await call('project_update',{projectId,requestId:uid(),expectedVersion:created.projectVersion,patch:{concepts:[{id:'object-a',category:'object',name:'测试插画',description:'验证实际文件绑定',prompt:'',revisionRequest:'暖色'}]}});
+  const finish=async(action,color)=>{
+    const current=await call('project_get',{projectId}),id=uid();
+    await call('task_start',{projectId,requestId:id,expectedVersion:current.projectVersion,kind:'image',args:{action,objectId:'object-a',provider:'workbuddy'}});
+    const waiting=await until(id,'waiting_external');
+    await writeFile(waiting.handoff.output,await sharp({create:{width:32,height:32,channels:3,background:color}}).png().toBuffer());
+    return until(id);
+  };
+  const original=await finish('generate','#35765d');let current=await call('project_get',{projectId});
+  await call('image_select',{projectId,requestId:uid(),expectedVersion:current.projectVersion,objectId:'object-a',taskId:original.id});
+  const edited=await finish('edit','#b65738');current=await call('project_get',{projectId});
+  const input={projectId,requestId:uid(),expectedVersion:current.projectVersion,objectId:'object-a',taskId:edited.id};
+  assert.equal((await call('image_select',input,true)).code,'image_selection_conflict');
+  await call('task_adopt',{taskId:edited.id,expectedVersion:current.projectVersion});current=await call('project_get',{projectId});
+  const ready=await call('task_get',{taskId:edited.id});assert.equal(ready.imageState.binding,'candidate');assert.equal(ready.imageState.stale,false);
+  const selection={...input,expectedVersion:current.projectVersion,review:{assetId:edited.result.asset.id,parentAssetId:original.result.asset.id,changesVisible:true,preserved:true,notes:'合成测试图由青变红，仅验证比较记录及选用协议。',checkedAt:Date.now()}};
+  await call('image_select',selection);assert.equal((await call('image_select',selection)).replayed,true);
+  assert.equal((await call('project_get',{projectId})).project.concepts[0].savedAssetId,edited.result.asset.id);
+  const selected=(await call('task_list',{projectId})).tasks.find(task=>task.id===edited.id);
+  assert.equal(selected.imageState.binding,'selected');assert.equal(selected.resultFileId,edited.result.asset.fileId);
+});
+
 test('real stdio: encoded arrays and JSON fallback preserve strict validation and canonical retries',async t=>{
   const {call,client}=await setup(t);
   const created=await call('project_create',{requestId:uid(),idea:'数组兼容',type:'video'});

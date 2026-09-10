@@ -1,3 +1,5 @@
+当前更新：协议 **9**、**27** 个工具、Skills **0.6.1**。新增图片任务、结果与选用状态同步，详见 [图片同步修复与验收](IMAGE_RESULT_SYNC_2026-09-10.md)。主题视觉素材与正文/媒体交接见 [文旅优化与验收](TOURISM_WORKFLOW_2026-09-10.md)。使用新包前重启旧 Runtime，再在 WorkBuddy 中实际复测。下方带日期的历史结果不代表本次加载通过。
+
 # WorkBuddy 核心 Skills 与 MCP 接入
 
 本轮提供本地 stdio MCP、两项 Skills 和本机连接配置。当前主流程为项目、文字、概念图、单镜头视频，以及网站提示词和素材交接。网站完整实现由当前 agent 负责，工作台不提供网站业务功能；旧模板与成品继续保留。连接器市场发布、专家插件、3D 与长篇编排不在本轮范围。详见 [提示词与 Harness](PROMPT_HARNESS.md)。
@@ -35,6 +37,8 @@ MCP 第一次调用工具会检查共享 Runtime。默认使用 `http://127.0.0.
 | 工具 | 能力 |
 | --- | --- |
 | knowledge_search / knowledge_apply | 检索有出处的岭南资料并按版本加入、移除或替换项目引用 |
+| theme_asset_list / theme_asset_apply | 检索并加入内置原创岭南视觉素材与文化出处 |
+| image_select | 从成功任务或本项目图片直接选用；改图须有真实对比记录，原图保留 |
 | workflow_get / workflow_update | 当前输入、相关变化、版本恢复、显式类型继承与源码采用 |
 | website_source_import | 实际源码 ZIP 候选、运行说明和执行端检查记录 |
 | prompt_prepare | 只读整理当前概念图、单镜头或网站提示词，返回版本、basis 与素材用途 |
@@ -51,13 +55,15 @@ MCP 第一次调用工具会检查共享 Runtime。默认使用 `http://127.0.0.
 | media_import | 从项目 inbox 导入实际图片、镜头、旁白、配乐 |
 | project_deliver | 正文 TXT/MD 和已采用媒体／HTML／ZIP 实际文件 |
 
-所有接口复用 `POST /v1/core/<工具名>`；MCP 不直接写 workspace.json 或另建 TaskManager。保留 `workbench://manifest` 资源。此处共 24 个工具，不开放删除项目、任意文件读写、Shell、安装软件、改密钥或发布网站工具。
+所有接口复用 `POST /v1/core/<工具名>`；MCP 不直接写 workspace.json 或另建 TaskManager。保留 `workbench://manifest` 资源。此处共 27 个工具，不开放删除项目、任意文件读写、Shell、安装软件、改密钥或发布网站工具。
 
 写操作使用 projectVersion 检查项目级并发；Web 更新其他项目不妨碍当前项目修改。requestId 支持同一操作幂等重放，新操作或合并后内容变化须使用新 ID；expectedVersion 不属于新记录的操作 hash。失败任务不会因同 ID 重放而再次生成，明确重生成使用新 requestId 和 retryOf。旧版收据仍按原参数重放。工作区原子保存最近 1000 次核心操作回执；更早的重试仍受版本和项目 ID 检查保护。任务提交持久保存 requestId；任务结果不因查询成功自动写回项目。采用记录和项目同时提交，重复采用不会重复追加内容。
 
 `media_import` 只读该项目 inbox 的简单文件名，拒绝路径穿越和链接到别处的文件。图片实际解码；音视频经 FFmpeg 解码与规范化，最大处理时间约 3 分钟，因此连接模板给出 210 秒超时。生成器、网站任务包准备及旧合成／构建通过异步 task 工具执行；不要为等待中的任务反复创建新 ID。
 
-图像／视频默认服务跟随设置，`args.provider` 可覆盖；WorkBuddy 当前对话交接请明确 `provider:"workbuddy"`。`task_dismiss` 可收起已核实的 uncertain 任务并释放占位。取消等待后可找回已完成结果，但不会自动采用。供应商网络查询最多每 5 秒一次，本机交接文件不受此节流。
+图像／视频默认服务跟随设置，`args.provider` 可覆盖；WorkBuddy 当前对话交接请明确 `provider:"workbuddy"`。`task_dismiss` 可收起已核实的 uncertain 任务并释放占位；确认旧等待与后续成功任务属于同一次重试时，可传 `replacementTaskId` 修复关联。已有 `retryOf` 自动修复，未知关联不猜测。取消等待后可找回已完成结果，但不会自动采用。供应商网络查询最多每 5 秒一次，本机交接文件不受此节流。
+
+成功概念图会直接显示到网页对象卡片，页面“选用此图”使用 `image_select` 写入最终选用。改图必须先对比并记录；`task_adopt` 对图片仍只放入候选。`imageState.binding` 区分 `unbound / candidate / selected`，文件入库和任务 succeeded 都不代表最终选用。已选用时无需 WorkBuddy 再调用采用流程。
 
 `workspace_recover` 默认检查；只有当前快照损坏／丢失且上一版有效时，才能用检查返回的 recoveryToken 恢复，损坏文件会另存。`storage_cleanup` 默认只预览，核对条目后传 execute=true 和 confirmationToken 才删除冗余源副本；默认保留 7 天。
 
@@ -67,7 +73,7 @@ MCP 第一次调用工具会检查共享 Runtime。默认使用 `http://127.0.0.
 
 以下项目只在本机保存测试资料，建议标题统一加“WB加载测试”，便于与真实作品区分。
 
-1. **发现工具**：对 WorkBuddy 说“检查创意工作台的连接状态，列出已有项目。”应发现 24 个工具及 manifest 资源；真实加载验收请在记录中注明，不把配置状态当作验证结果。
+1. **发现工具**：对 WorkBuddy 说“检查创意工作台的连接状态，列出已有项目。”应发现 27 个工具及 manifest 资源；真实加载验收请在记录中注明，不把配置状态当作验证结果。
 2. **无额外密钥的文字闭环**：“新建 WB加载测试小说，主题是西关修伞人的一天。写创意、文化依据、一个短篇并保存，导出 TXT 和 Markdown。”核对 project_list 可找到、重新读取正文一致、文件真实存在。可在 Web 查看同一项目。
 3. **无额外密钥的网站任务交接**：“新建 WB加载测试网站，准备岭南作品网站的生成任务，再用当前编程能力完整实现并交付源码。”应通过 prompt_prepare 与 website 任务获得真实提示词／素材包，再由当前 agent 实现。不能用 website-build 的旧模板替代，也不能把任务包称为已生成网站。
 4. **图像**：“为测试项目添加一个葵扇概念对象并生成图片。”WorkBuddy 应读取本次 handoff 的输入，用其实际生图能力写回 PNG，查询成功再采用。再要求局部修改，核对读取的是原图。没有生图能力时应明确说明，不能出现占位图或自发消息循环。

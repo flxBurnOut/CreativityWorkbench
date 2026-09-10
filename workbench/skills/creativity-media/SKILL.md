@@ -3,7 +3,7 @@ name: creativity-media
 description: 通过创意工作台 MCP 整理概念图与单镜头提示词、交接实际媒体，或获取网站生成任务与素材并由当前 agent 完整实现网站；保留旧视频合成与网站文件。
 description_zh: 在 WorkBuddy 对话中完成概念图、单镜头视频和网站生成任务交接。
 description_en: Prepare project prompts and media handoffs, generate single shots, and implement websites from Workbench request bundles using the current agent.
-version: 0.5.1
+version: 0.6.1
 author: CreativityWorkbench
 ---
 
@@ -25,7 +25,7 @@ author: CreativityWorkbench
 
 ## 任务完成规则
 
-`task_start` 只提交任务，`task_get` 查询，成功后 `task_adopt` 才写入项目。如果用户已要求完成整项创作，可继续采用符合要求的结果，不为每一步重新请求许可。需要视觉选择时展示候选并让用户选择。过期结果返回 `stale_result`，保留新稿并说明差异。
+`task_start` 只提交任务，`task_get` 查询。概念图成功后会显示到网页对象卡片；`image_select` 最终选用，`task_adopt` 对图像仅放入候选。其他成果成功后使用 `task_adopt` 写入项目。如果用户已要求完成整项创作，可继续采用符合要求的结果，不为每一步重新请求许可。需要视觉选择时展示候选并让用户选择。修改图先真实对比并记录，再选用。过期结果保留新稿并说明差异。
 
 等待任务时使用合理间隔（例如 2–5 秒）；一个交互回合内持续数次没有变化就报告任务 ID 和当前状态，之后继续查原任务，不宣称后台一定完成。`uncertain` 不等于失败；先查询、检查交接文件或已存在的服务作业，禁止换 ID 自动重新付费生成。`task_cancel` 取消本地等待，后续查询仍可找回结果；不能保证远程费用停止。
 
@@ -43,4 +43,12 @@ author: CreativityWorkbench
 
 ## 验收与传参兼容
 
-本版要求核心协议 7、24 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+本版要求核心协议 9、27 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+
+## 文创文旅网站与主题视觉素材
+
+使用 `theme_asset_list` 搜索本机原创素材，`theme_asset_apply` 加入明确选中的素材与知识依据。原始 PNG/SVG 会进入网站任务包；不是原站照片或传统工艺复原。完整小说正文与已采用视频可以一起沿用，先读 [文旅网站流程](references/tourism-website.md)。
+
+## 图片完成、展示与选用
+
+任务 succeeded 后，新结果会自动显示在网页对象卡片，可直接对比并选用；文件入库、放入候选与最终选用是不同状态。对话端以 imageState 为准，已选用时不再 task_adopt。详见 [图片状态同步](references/image-result-sync.md)。

@@ -146,16 +146,19 @@
         "storage_cleanup",
         "video_frame_fit",
         "workbench_call_json",
-        "task_complete_handoff"
+        "task_complete_handoff",
+        "theme_asset_list",
+        "theme_asset_apply",
+        "image_select"
       ],
       "skills": [
         "workbench/skills/creativity-project",
         "workbench/skills/creativity-media"
       ],
       "configuration": "npm run workbench:setup",
-      "validation": "local-web-to-stdio-handoff-tested; protocol-7-WorkBuddy-client-retest-required",
-      "protocolVersion": 7,
-      "skillVersion": "0.5.1"
+      "validation": "local-image-state-and-browser-tested; protocol-9-WorkBuddy-client-retest-required",
+      "protocolVersion": 9,
+      "skillVersion": "0.6.1"
     },
     {
       "id": "service-settings",
@@ -178,11 +181,11 @@
     },
     {
       "id": "continuous-workflow",
-      "name": "全类型成果依据、历史恢复与显式继承",
+      "name": "完整正文、已采用媒体与多来源资料向网站交接",
       "transport": "http",
       "endpoint": "/v1/core/workflow_get",
       "mutationEndpoint": "/v1/core/workflow_update",
-      "protocolVersion": 7,
+      "protocolVersion": 8,
       "validation": "local-workflow-and-stdio-tested; real-provider-not-verified"
     },
     {
@@ -211,9 +214,32 @@
       "transport": "http",
       "endpoint": "/v1/core/knowledge_search",
       "mutationEndpoint": "/v1/core/knowledge_apply",
-      "version": "2026-09-09.1",
-      "entryCount": 10,
+      "version": "2026-09-10.1",
+      "entryCount": 11,
       "validation": "sources-reviewed; local-reference-and-generation-input-tested; generated-cultural-quality-not-verified"
+    },
+    {
+      "id": "lingnan-visual-assets",
+      "name": "可直接使用的岭南原创视觉素材",
+      "transport": "http",
+      "endpoint": "/v1/core/theme_asset_list",
+      "mutationEndpoint": "/v1/core/theme_asset_apply",
+      "version": "lingnan-visual-2026-09-10.1",
+      "entryCount": 6,
+      "formats": [
+        "png",
+        "svg",
+        "webp-thumbnail"
+      ],
+      "validation": "local-files-and-core-selected-bundle-tested; original-illustration-not-historical-reconstruction"
+    },
+    {
+      "id": "image-result-sync",
+      "name": "图片任务结果、候选与选用状态同步",
+      "transport": "http",
+      "endpoint": "/v1/core/image_select",
+      "protocolVersion": 9,
+      "validation": "local-runtime-http-and-browser-tested; remote-WorkBuddy-client-retest-required"
     }
   ],
   "editorModules": []

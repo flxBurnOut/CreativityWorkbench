@@ -73,8 +73,8 @@ export function useProjectStore() {
     const request = writing.current;
     try { await request; } finally { if (writing.current === request) writing.current = null; }
   },[]);
-  const synchronize = useCallback(async () => {
-    if (synchronizing.current || !initialized.current || memoryOnly.current || pending.current || failed.current || writing.current || document.visibilityState !== 'visible') return;
+  const synchronize = useCallback(async (force=false) => {
+    if (synchronizing.current || !initialized.current || memoryOnly.current || pending.current || failed.current || writing.current || (!force && document.visibilityState !== 'visible')) return;
     synchronizing.current = true;
     const before = current.current;
     try {
@@ -84,7 +84,7 @@ export function useProjectStore() {
       current.current = { ...remote.workspace, activeProjectId, projects: remote.workspace.projects.map(p => ({ ...p, stage: before.projects.find(old => old.id === p.id)?.stage ?? p.stage })) };
       confirmed.current = remote.workspace; revision.current = remote.revision;
       if (activeProjectId !== before.activeProjectId) window.history.replaceState(null, '', activeProjectId ? '#project/' + activeProjectId : '#projects');
-      setWorkspace(current.current); setNote('已同步 WorkBuddy 或另一页面保存的内容。');
+      setWorkspace(current.current); setNote('已同步最新项目内容。');
     } catch { /* Background refresh never replaces a local draft or masks a save error. */ }
     finally { synchronizing.current = false; }
   }, []);
@@ -110,5 +110,5 @@ export function useProjectStore() {
     memoryOnly.current = true; initialized.current = true; current.current = emptyWorkspace();
     setWorkspace(current.current); pending.current = null; failed.current = null; setReady(true); setError(''); setStatus('temporary');
   };
-  return { workspace, change, status, error, note, ready, retry: ready ? flush : load, flush, useTemporary, dismissNote: () => setNote('') };
+  return { workspace, change, status, error, note, ready, retry: ready ? flush : load, flush, synchronize, useTemporary, dismissNote: () => setNote('') };
 }

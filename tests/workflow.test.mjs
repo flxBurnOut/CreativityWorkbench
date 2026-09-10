@@ -44,7 +44,7 @@ test('type branches retain existing outputs and isolate art, objects, requests a
   const image=await h.repo.putImage(await png('teal'));p.assets=[{id:'person-image',name:'人物图',fileId:image.fileId}];p.concepts=[{id:'person',name:'阿澄',category:'character',description:'现代衬衫',prompt:'',revisionRequest:'',savedAssetId:'person-image'}];
   p=await h.save(p);p=switchWorkType(p,'website');assert.equal(p.art.palette,'');assert.deepEqual(p.concepts,[]);assert.equal(p.novel,undefined);assert.equal(p.content.novel.story,'原小说梗概');
   p.art.palette='网站青绿';p.content.website={goal:'作品展示'};p=await h.save(p);
-  p=inheritWorkType(p,'novel',{brief:true,content:true,art:false,conceptIds:['person']});assert.equal(p.art.palette,'网站青绿');assert.equal(p.transfer.content.characters,'阿澄保持现代衬衫');assert.notEqual(p.concepts[0].id,'person');assert.equal(p.concepts[0].savedAssetId,'person-image');
+  p=inheritWorkType(p,'novel',{brief:true,content:true,art:false,conceptIds:['person']});assert.equal(p.art.palette,'网站青绿');assert.equal(p.transfers[0].content.characters,'阿澄保持现代衬衫');assert.notEqual(p.concepts[0].id,'person');assert.equal(p.concepts[0].savedAssetId,'person-image');
   p=await h.save(p);p=switchWorkType(p,'novel');assert.equal(p.art.palette,'小说冷灰');assert.equal(p.delivery.notes,'完整短篇');assert.equal(p.novel.text,'原正文');
   p=await h.save(p);const restored=parseStoredWorkspace(await h.repo.loadWorkspace()).workspace.projects[0];assert.equal(projectForType(restored,'website').art.palette,'网站青绿');assert.equal(pruneAssets(restored).assets.length,1);
   const legacy={...createProject('旧多类型项目','video'),novel:{title:'旧小说',text:'旧正文',taskId:'old'},video:{ratio:'16:9',shots:[shot()],burnSubtitles:false,keepAudio:false}};

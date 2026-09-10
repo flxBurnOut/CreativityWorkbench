@@ -1,5 +1,9 @@
 # 项目约定
 
+- 2026-09-10 图片选用同步修复：当前协议 9、27 工具、Skills 0.6.1。成功概念图从任务直接显示到对应对象，image_select 在共享 Runtime 中按版本和幂等写入最终选用；改图须保留真实对比记录，不自动替换原图。task_adopt 对图片仍仅放入候选。来源比较消除字段顺序及结果自身写入的假过期，保留实际输入变化检查。明确 retryOf 修复 supersededBy；未知关系只由页面或 task_dismiss 显式确认，不猜测、不取消远端作业。轮询可取消且单请求去重。详见 docs/IMAGE_RESULT_SYNC_2026-09-10.md。以下日期版本均为当时状态。
+
+- 2026-09-10 文创文旅完善：当前协议 8、26 工具、Skills 0.6.0。新增 theme_asset_list/apply，6 组原创 SVG/PNG 资产与 11 条知识；新知识版本保留旧快照。transfers 可并存完整小说和明确选择的已采用媒体，网站任务直接附真实原文、素材和来源。网站任务仍由当前 agent 实现，examples/lingnan-visit 是独立具体 Demo。任务缓存有容量限制，媒体下载与 ZIP 打包采用流式处理，静态预览只解码选定文件；不得把本地内存采样当作真实 WorkBuddy 长时验收。详见 docs/TOURISM_WORKFLOW_2026-09-10.md。
+
 - 2026-09-10 原任务交接修复：当前协议 7、24 工具、Skills 0.5.1。网页图片任务必须沿用原 ID 和输出路径；task_complete_handoff 仅将明确选定的同项目 PNG 写回原交接，由正常导入器校验成功，不创建任务或直接采用。同 ID 同文件可重试，不覆盖不同结果。Skills 已有任务路由优先于新建流程。历史段落的版本为当时状态。
 
 - 2026-09-09 实际验收修复：当前核心协议 6、23 工具、Skills 0.5.0。新增 video_frame_fit 和受限 workbench_call_json。视频规格与文件可解码、依据新鲜度分开；网站外部验收报告不等于 Runtime 独立验证。MCP 原生数组与 JSON 数组字符串在传输层兼容，Runtime 保持严格类型、版本和幂等检查。历史段落中的工具数/协议是当时状态。见 docs/WORKBUDDY_ACCEPTANCE_FIXES_2026-09-09.md。
