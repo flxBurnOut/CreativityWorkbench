@@ -2,6 +2,7 @@ node_modules/
 dist/
 .next/
 .vinext/
+.cache/
 .wrangler/
 next-env.d.ts
 *.tsbuildinfo

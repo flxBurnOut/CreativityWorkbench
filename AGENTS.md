@@ -1,5 +1,11 @@
 # 项目约定
 
+- 2026-09-10 资源生命周期：项目进程启动前预加载 lib/workbench/temp-env.mjs，将 TEMP/TMP/TMPDIR 限定到当前检出的 work/tmp/process，不改用户环境。测试使用 tests/helpers/test-directory.mjs；等待任务、HTTP 请求和自建子进程停止后才删自己的夹具，停止失败保留并报错。内存验证默认清理大型夹具。storage_cleanup 只删有正式副本与哈希证明的单个源文件，保留请求、输入、作品和历史。资源采样不等于 WorkBuddy 长时验收；实测及剩余风险见 docs/RESOURCE_AUDIT_2026-09-10.md。
+
+- 2026-09-10 前端缓存隔离：Vite cacheDir 必须落在当前检出目录的 .cache/node_modules/.vite/<command>/<mode>。测试副本可共享安装依赖，但不能共用 node_modules/.vite 预打包缓存；serve/build 分离，保留 node_modules 路径段以兼容 Vinext 的 CommonJS 过滤。缓存路径也必须参与 workbench-dependency-cache 插件名：Vite 不哈希 cacheDir，迁移后不换版本会让浏览器混用新旧 React。修复或测试后须确认用户实际页面及冷启动仍能加载，不能只验证测试副本。不要用关闭错误遮罩掩盖加载失败。
+
+- 2026-09-10 使用流程重整：当前协议 10、29 工具、Skills 0.7.0。网站默认目标→连续制作→初稿预览，websiteBrief 为统一目标，website_run 自动准备资料，website_complete 或原 result.zip 回传实际源码；等待源码时保持 waiting_external，禁止把资料包成功等同网站完成。初稿自动保存，用户一次“使用这个版本”才替换当前稿，限定范围修改带真实旧源码。小说/视频默认直接看结果，详细五阶段按需打开；3D 从主入口移至更多能力。保留版本、来源、幂等与范围检查，不自动重复生成或发布。详见 docs/RESULT_STUDIO_2026-09-10.md。
+
 - 2026-09-10 图片选用同步修复：当前协议 9、27 工具、Skills 0.6.1。成功概念图从任务直接显示到对应对象，image_select 在共享 Runtime 中按版本和幂等写入最终选用；改图须保留真实对比记录，不自动替换原图。task_adopt 对图片仍仅放入候选。来源比较消除字段顺序及结果自身写入的假过期，保留实际输入变化检查。明确 retryOf 修复 supersededBy；未知关系只由页面或 task_dismiss 显式确认，不猜测、不取消远端作业。轮询可取消且单请求去重。详见 docs/IMAGE_RESULT_SYNC_2026-09-10.md。以下日期版本均为当时状态。
 
 - 2026-09-10 文创文旅完善：当前协议 8、26 工具、Skills 0.6.0。新增 theme_asset_list/apply，6 组原创 SVG/PNG 资产与 11 条知识；新知识版本保留旧快照。transfers 可并存完整小说和明确选择的已采用媒体，网站任务直接附真实原文、素材和来源。网站任务仍由当前 agent 实现，examples/lingnan-visit 是独立具体 Demo。任务缓存有容量限制，媒体下载与 ZIP 打包采用流式处理，静态预览只解码选定文件；不得把本地内存采样当作真实 WorkBuddy 长时验收。详见 docs/TOURISM_WORKFLOW_2026-09-10.md。

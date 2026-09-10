@@ -2,8 +2,9 @@
 async function proxy(request: Request, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
   const route = path.join('/');
+  const binary=route.startsWith('files/')||/^tasks\/[a-zA-Z0-9_-]{1,80}\/website-result$/.test(route);
   if(path[0]==='source-preview'&&path.slice(2).some(part=>!part||part==='.'||part==='..'||/[\\/]/.test(part)))return Response.json({error:'预览路径无效。'},{status:400});
-  if (!/^(source-preview\/[a-f0-9]{64}\.zip\/[^?#]+|core\/(project_get|video_frame_fit|task_complete_handoff|image_select|task_adopt)|workspace|status|settings|recovery|media|media\/[a-f0-9]{64}|files\/(website-source|mp4|wav|[a-f0-9]{64}\.(mp4|wav|html|zip|srt)|restore\/[a-f0-9]{64}\.(mp4|wav|html|zip|srt))|tasks|tasks\/[a-zA-Z0-9_-]{1,80}(\/(cancel|dismiss))?)$/.test(route)) return Response.json({ error: '接口不存在。' }, { status: 404 });
+  if (!/^(source-preview\/[a-f0-9]{64}\.zip\/[^?#]+|core\/(project_get|video_frame_fit|task_complete_handoff|image_select|task_adopt|website_run|workflow_update)|workspace|status|settings|recovery|media|media\/[a-f0-9]{64}|files\/(website-source|mp4|wav|[a-f0-9]{64}\.(mp4|wav|html|zip|srt)|restore\/[a-f0-9]{64}\.(mp4|wav|html|zip|srt))|tasks|tasks\/[a-zA-Z0-9_-]{1,80}(\/(cancel|dismiss|website-result))?)$/.test(route)) return Response.json({ error: '接口不存在。' }, { status: 404 });
   if (route === 'settings' && !['localhost', '127.0.0.1', '[::1]'].includes(new URL(request.url).hostname)) return Response.json({ error: 'API 配置仅限本机访问。' }, { status: 403 });
   const origin = request.headers.get('origin');
   // Opaque sandbox documents load classic scripts/styles without an Origin header.
@@ -16,14 +17,14 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
     let body: ReadableStream<Uint8Array> | undefined;
     if (!['GET','HEAD'].includes(request.method)) {
       const type = request.headers.get('content-type') || '';
-      if (route.startsWith('files/') ? !['application/octet-stream','video/mp4','audio/wav','audio/x-wav','audio/mpeg','audio/mp4'].includes(type) : route === 'media' ? !['image/png','image/jpeg','image/webp'].includes(type) : !type.startsWith('application/json')) return Response.json({ error: '请求格式无效。' }, { status: 415 });
+      if (binary ? !['application/octet-stream','video/mp4','audio/wav','audio/x-wav','audio/mpeg','audio/mp4'].includes(type) : route === 'media' ? !['image/png','image/jpeg','image/webp'].includes(type) : !type.startsWith('application/json')) return Response.json({ error: '请求格式无效。' }, { status: 415 });
       headers['Content-Type'] = type;
-      let size=0;const limit=(route.startsWith('files/')?128:20)*1024*1024;
+      let size=0;const limit=(binary?128:20)*1024*1024;
       body=request.body?.pipeThrough(new TransformStream<Uint8Array,Uint8Array>({transform(chunk,controller){size+=chunk.length;if(size>limit){controller.error(new Error('请求内容过大。'));return;}controller.enqueue(chunk);}}));
     }
     const base = process.env.WORKBENCH_RUNTIME_URL || 'http://127.0.0.1:8791';
     const query = route === 'tasks' ? new URL(request.url).search : '';
-    const options = { method: request.method, headers, body, duplex:'half', cache: 'no-store' as RequestCache, signal: AbortSignal.any([request.signal,AbortSignal.timeout(route.startsWith('files/')?240000:30000)]) };
+    const options = { method: request.method, headers, body, duplex:'half', cache: 'no-store' as RequestCache, signal: AbortSignal.any([request.signal,AbortSignal.timeout(binary?240000:30000)]) };
     const response = await fetch(`${base}/v1/${route}${query}`, options);
     const responseHeaders:Record<string,string>={'Content-Type':response.headers.get('content-type')||'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
     if(request.method==='GET'&&/^(media\/|files\/[a-f0-9]{64}\.|source-preview\/)/.test(route)&&response.ok)responseHeaders['Cache-Control']=response.headers.get('cache-control')||'private, max-age=3600';

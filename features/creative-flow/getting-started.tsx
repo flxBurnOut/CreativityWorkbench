@@ -9,11 +9,11 @@ export const workIcons: Record<WorkType, IconName> = { novel: 'book', video: 'fi
 export function CapabilityCards({ onCreate }: { onCreate: (type: WorkType) => void }) {
   return <section className="capabilities" aria-labelledby="capabilities-title">
     <div className="section-heading"><div><h2 id="capabilities-title">你想做出什么？</h2><p>选择一个目标，工作台会按对应流程带你开始。</p></div><Button variant="ghost" onClick={() => onCreate('undecided')}>还没确定，先记想法 <Icon name="arrow" size={15}/></Button></div>
-    <div className="capability-grid">{TYPE_ORDER.filter(type => type !== 'undecided').map(type => <button type="button" className="capability-card" key={type} onClick={() => onCreate(type)}>
-      <span className="capability-icon"><Icon name={workIcons[type]} size={23}/></span><span className="capability-heading"><strong>{WORK_GUIDES[type].title}</strong>{type === 'craft' && <small>仅前期设计</small>}</span>
-      <span className="capability-description">{WORK_GUIDES[type].description}</span><span className="capability-output">{WORK_GUIDES[type].output}</span><span className="capability-start">开始{type === 'craft' ? '整理设计' : type === 'novel' ? '写故事' : type === 'video' ? '做视频' : '做网站'} <Icon name="arrow" size={16}/></span>
+    <div className="capability-grid">{TYPE_ORDER.filter(type => type !== 'undecided'&&type!=='craft').map(type => <button type="button" className="capability-card" key={type} onClick={() => onCreate(type)}>
+      <span className="capability-icon"><Icon name={workIcons[type]} size={23}/></span><span className="capability-heading"><strong>{WORK_GUIDES[type].title}</strong></span>
+      <span className="capability-description">{WORK_GUIDES[type].description}</span><span className="capability-output">{WORK_GUIDES[type].output}</span><span className="capability-start">开始{type === 'novel' ? '写故事' : type === 'video' ? '做视频' : '做网站'} <Icon name="arrow" size={16}/></span>
     </button>)}</div>
-    <p className="shared-capabilities">每类作品都可使用：岭南文化资料 · 创意完善 · 内容修改 · 美术方案 · 图像生成与原图修改 · 素材保存与下载</p>
+    <details className="shared-capabilities"><summary>更多能力与设计资料</summary><p>文化资料、素材与详细编辑可在作品中按需打开。</p><Button variant="ghost" onClick={()=>onCreate('craft')}>准备 3D 前期设计资料（暂不生成模型）</Button></details>
   </section>;
 }
 
@@ -35,17 +35,17 @@ export function WorkflowHelp({ initialType = 'novel', project, notice, onSetting
   const guide = WORK_GUIDES[type];
   const request = project ? workBuddyRequest(project) : `请使用创意工作台 Skills 和 MCP，先检查连接，再帮我${guide.title}。示例目标：${guide.example}。沿用明确的岭南文化依据，保存到工作台项目；生成后展示结果，需要我选择时再采用。`;
   return <div className="workflow-help">
-    <p>先选作品目标，再沿着对应路线制作。内容随时自动保存，生成的建议需要采用后才成为当前稿。</p>
+    <p>先描述作品目标，直接制作并查看结果。详细设定按需展开，不要求逐阶段填表。</p>
     <div className="help-types" aria-label="查看各类作品流程">{TYPE_ORDER.map(value => <button type="button" key={value} aria-pressed={type === value} onClick={() => setType(value)}><Icon name={workIcons[value]} size={17}/>{WORK_GUIDES[value].title}</button>)}</div>
     <div className="help-route"><h3>{guide.title}</h3><p>{guide.route}</p><strong>最后交付：{guide.output}</strong><p className="muted">{guide.boundary}</p></div>
     <h3>在网页里怎么操作</h3><ol className="help-steps">{[
-      ['填写或生成', '已有内容可以直接粘贴；使用网页的文字生成按钮前，在设置里配置文字服务。视频、图片按所选服务接入。'],
-      ['预览并采用', '提交后定位到本页“本步生成结果”。比较结果，采用满意的版本；图片再选择“选用此图”。'],
-      ['进入下一步', '点击写明目标的下一步按钮。纯文字故事可跳过画风与图片，视频也可直接从一个镜头开始。'],
-      ['保存与下载', '最后一步查看成果并下载。网站需要交给 WorkBuddy 完成制作，再导入源码 ZIP。'],
+      ['描述目标', '写一次作品要求；网站自动匹配空项目的主题资料，小说直接创作正文，视频直接描述镜头。'],
+      ['查看进度与初稿', '页面会说明正在做什么。需要 WorkBuddy 时复制已有交接请求，回传结果后直接显示预览。'],
+      ['围绕结果修改', '在作品旁提出这次的修改要求。网站可选文字、配色、图片或功能范围，沿用实际旧源码。'],
+      ['使用与交付', '满意后点击“使用这个版本”，下载实际文件。旧版本在详细编辑中保留；文件收到不等于所有功能已经验收。'],
     ].map(([title, detail], i) => <li key={title}><span>{i + 1}</span><div><h4>{title}</h4><p>{detail}</p></div></li>)}</ol>
     <Button variant="secondary" onClick={onSettings}>打开生成服务设置</Button>
-    <h3>从哪里找文化依据</h3><p>在“确定创意”点击“选择文化资料”，按元素或地域筛选、查看出处并勾选。选中的事实会进入后续生成；自己的时代背景、人物与虚构设定继续写在“当前项目的文化语境”。可下载本次文化依据，网站任务包也会附上资料。WorkBuddy 对话可直接请求搜索并选用相关条目。</p>
+    <h3>从哪里找文化依据</h3><p>网站可在“本次目标与资料”查看；其他作品可打开详细编辑，再在“确定创意”点击“选择文化资料”，按元素或地域筛选、查看出处并勾选。选中的事实会进入后续生成；自己的时代背景、人物与虚构设定继续写在“当前项目的文化语境”。可下载本次文化依据，网站任务包也会附上资料。WorkBuddy 对话可直接请求搜索并选用相关条目。</p>
     <details className="help-workbuddy"><summary>也可以在 WorkBuddy 对话中操作</summary><p>先导入本项目 Skills 并连接 MCP，再把下面这段话发给 WorkBuddy。它会读取并保存同一项目，回到网页即可查看成果。</p><p className="muted">对话文字创作使用 WorkBuddy 当前模型，无需额外文字密钥。图片和视频取决于已接入的实际服务。</p><textarea readOnly rows={6} aria-label="发给 WorkBuddy 的操作说明" value={request}/><Button icon="copy" onClick={() => void navigator.clipboard.writeText(request).then(() => notice('已复制，请粘贴到已连接创意工作台的 WorkBuddy 对话')).catch(() => notice('复制失败，请选中文字后复制。'))}>复制给 WorkBuddy</Button><p className="muted">首次使用需在 WorkBuddy 中加载本项目的两项技能与连接配置，再粘贴上面的操作说明。</p></details>
   </div>;
 }

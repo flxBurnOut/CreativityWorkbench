@@ -5,7 +5,7 @@ export const TYPE_ORDER: WorkType[] = ['novel', 'video', 'website', 'craft', 'un
 export const WORK_GUIDES: Record<WorkType, { title: string; description: string; output: string; route: string; boundary: string; example: string }> = {
   novel: { title: '写一篇故事', description: '从想法整理人物、情节与背景，再创作和修改短篇正文。', output: '短篇正文 · TXT / Markdown', route: '确定创意 → 整理故事 → 创作正文 → 下载', boundary: '配图可选；目前支持短篇，长篇编排尚未实现。', example: '写一个发生在当代岭南街巷的短篇，一把旧葵扇串起两代人的回忆。' },
   video: { title: '做一段视频', description: '描述一个镜头，可选一张参考图，生成、修改并下载视频。', output: '单镜头视频 · MP4', route: '确定画面 → 可选参考图 → 生成镜头 → 下载', boundary: '单镜头 2–10 秒；可展开配音、多镜头合成等进阶操作。', example: '一个 5 秒连续镜头：雨后的岭南骑楼下，一位年轻人收起葵扇，镜头缓慢拉远。' },
-  website: { title: '做一个网站', description: '整理网站需求与素材，交给 WorkBuddy 制作，再收回源码继续修改。', output: '网站源码 ZIP · 静态页面预览', route: '确定需求 → 准备素材 → WorkBuddy 制作 → 导入与预览', boundary: '工作台整理任务和文件；网站由 WorkBuddy 完成，发布需另行处理。', example: '为岭南手作做一个文化专题网站，展示作品与文化依据，支持按作品类别筛选。' },
+  website: { title: '做一个网站', description: '描述一次目标，自动准备资料；收到网站初稿后直接预览与修改。', output: '网站源码 ZIP · 静态页面预览', route: '描述目标 → 制作网站 → 查看与交付', boundary: 'WorkBuddy 负责实际制作，源码自动回传；未连接自动发送时需复制一次交接请求。发布另行处理。', example: '为岭南手作做一个文化专题网站，展示作品与文化依据，支持按作品类别筛选。' },
   craft: { title: '准备 3D 文创设计', description: '整理形体、材质、文化依据和概念参考，交付三维制作前期资料。', output: '设计说明与参考图片 · ZIP', route: '确定设计 → 整理形体 → 准备参考 → 导出资料', boundary: '当前只做前期资料，不生成 3D 模型、拓扑或纹理。', example: '以葵扇为灵感整理一件三维文创的形体、材质和参考图，先交付设计资料。' },
   undecided: { title: '先整理一个想法', description: '保存创意与资料，确定作品形式后再继续。', output: '创作资料包 · ZIP', route: '记录想法 → 整理资料 → 选择作品类型', boundary: '可随时切换作品类型，原类型草稿会保留。', example: '围绕岭南手艺人与街巷生活整理创意，作品形式稍后决定。' },
 };

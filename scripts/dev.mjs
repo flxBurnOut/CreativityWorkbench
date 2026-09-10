@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const cwd = fileURLToPath(new URL('../', import.meta.url));
+const tempBootstrap = new URL('../lib/workbench/temp-env.mjs', import.meta.url).href;
 const children = [];
 let stopping = false;
 function stop(code = 0) {
@@ -18,7 +19,7 @@ function stop(code = 0) {
 }
 for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => stop());
 for (const args of [['scripts/workbench-http.mjs'], ['node_modules/vinext/dist/cli.js', 'dev', '--hostname', 'localhost', '--port', '3001']]) {
-  const child = spawn(process.execPath, args, { cwd, stdio: 'inherit', windowsHide: true });
+  const child = spawn(process.execPath, ['--import', tempBootstrap, ...args], { cwd, stdio: 'inherit', windowsHide: true });
   children.push(child);
   child.once('error', (error) => { console.error(error.message); stop(1); });
   child.once('exit', (code) => { if (!stopping) stop(code || 1); });

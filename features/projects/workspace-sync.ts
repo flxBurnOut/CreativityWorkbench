@@ -14,6 +14,18 @@ function equal(a: unknown, b: unknown): boolean {
   return left.length === right.length && left.every(([key, value]) => Object.hasOwn(b, key) && equal(value, (b as Record<string, unknown>)[key]));
 }
 
+function mergeWebsiteDraft(before:Project|undefined,mine:Project|undefined,theirs:Project|undefined) {
+  if(!before||!mine||!theirs||[before,mine,theirs].some(p=>p.type!=='website'))return;
+  const withoutDraft=(p:Project)=>comparable({...p,websiteEdit:undefined});
+  if(!equal(withoutDraft(before),withoutDraft(mine)))return;
+  // Incoming task results and the next instruction are independent. A run may
+  // also have consumed the submitted instruction while the user types the next.
+  const consumed=!theirs.websiteEdit&&theirs.websiteRequest?.taskId!==before.websiteRequest?.taskId&&
+    theirs.websiteBrief?.change===before.websiteEdit?.change&&theirs.websiteBrief?.scope===before.websiteEdit?.scope;
+  if(!equal(before.websiteEdit,theirs.websiteEdit)&&!equal(mine.websiteEdit,theirs.websiteEdit)&&!consumed)return;
+  return {...theirs,websiteEdit:mine.websiteEdit,stage:mine.stage};
+}
+
 /** Preserve remote changes; an overlapping local edit becomes a separate, visible project. */
 export function reconcileWorkspace(base: Workspace, local: Workspace, remote: Workspace, newId: () => string = () => crypto.randomUUID()) {
   const projects: Project[] = [];
@@ -28,6 +40,8 @@ export function reconcileWorkspace(base: Workspace, local: Workspace, remote: Wo
     const remoteChanged = !equal(comparable(before), comparable(theirs));
     if (!localChanged) { if (theirs) projects.push({ ...theirs, stage: mine?.stage ?? theirs.stage }); continue; }
     if (!remoteChanged || equal(comparable(mine), comparable(theirs))) { if (mine) projects.push(mine); continue; }
+    const withDraft=mergeWebsiteDraft(before,mine,theirs);
+    if(withDraft){projects.push(withDraft);continue;}
     if (theirs) projects.push(theirs);
     if (theirs && !mine) preservedRemovals.push(theirs.title);
     if (mine) {

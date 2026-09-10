@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
+import { createTestDirectory, closeTestServer, stopTestProcess } from './helpers/test-directory.mjs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { once } from 'node:events';
@@ -20,18 +20,20 @@ import { mediaCommand, probeMedia } from '../lib/workbench/video-media.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const uid = () => randomUUID();
 async function setup(t) {
-  const directory = await mkdtemp(join(tmpdir(), 'creative-mcp-'));
+  const scope = await createTestDirectory(t, 'creative-mcp');
+  const directory = scope.directory;
   let remoteCalls = 0;
   const runtime = createRuntimeServer({ dataDirectory: directory, env: { WORKBUDDY_ACCESS_TOKEN: 'test-no-dispatch' }, fetchImpl: async () => { remoteCalls++; throw new Error('MCP handoff must not dispatch messages or call a provider.'); } });
+  scope.defer(() => closeTestServer(runtime));
   runtime.listen(0, '127.0.0.1'); await once(runtime, 'listening');
   const url = 'http://127.0.0.1:' + runtime.address().port;
-  const transports = [];
   async function connect() {
     const transport = new StdioClientTransport({ command: process.execPath, args: [join(root, 'scripts/workbench-mcp.mjs')], cwd: directory, env: { WORKBENCH_RUNTIME_URL: url, WORKBENCH_DATA_DIR: directory }, stderr: 'pipe' });
     const client = new Client({ name: 'core-protocol-test', version: '1.0.0' });
-    await client.connect(transport); transports.push(client); return client;
+    scope.defer(() => client.close());
+    await client.connect(transport); return client;
   }
-  t.after(async () => { for (const client of transports) await client.close(); await new Promise(r => runtime.close(r)); assert.equal(remoteCalls, 0); });
+  t.after(() => assert.equal(remoteCalls, 0));
   const client = await connect();
   async function call(name, input = {}, expectError = false) {
     const result = await client.callTool({ name, arguments: input }, undefined, { timeout: 200000 });
@@ -54,6 +56,17 @@ async function setup(t) {
 }
 const site = () => ({ title: '岭南手艺', description: '用户提供的资料', accent: '#35765d', theme: 'paper', pages: [{ id: 'home', title: '首页', intro: '骑楼下', sections: [{ kind: 'text', title: '说明', body: '真实保存的文案', items: [] }] }], limitations: [] });
 const video = () => ({ ratio: '16:9', burnSubtitles: false, keepAudio: false, shots: [{ id: 'shot-a', title: '街巷', visual: '日光移动', camera: '推进', duration: 2, narration: '街巷', subtitle: '街巷', revision: '' }] });
+
+test('real stdio: one website goal waits for code and returns the original task draft without extra adoption',async t=>{
+  const {call,until,client}=await setup(t);assert.ok((await client.listTools()).tools.some(t=>t.name==='website_complete'));
+  const p=await call('project_create',{requestId:uid(),idea:'岭南文化网站',type:'website'});
+  const input={projectId:p.projectId,requestId:uid(),expectedVersion:p.projectVersion,goal:'骑楼文化网站，文案与插画结合'};
+  const started=await call('website_run',input),waiting=await until(started.id,'waiting_external');assert.equal(waiting.dispatch,'conversation');assert.ok(waiting.result.websiteRequest.bundleFileId);
+  const current=await call('project_get',{projectId:p.projectId});await writeFile(join(current.inbox,'website.zip'),zipSync({'index.html':strToU8('<!doctype html><h1>真实源码交接</h1>')}));
+  await call('website_complete',{taskId:started.id,filename:'website.zip',verificationMethod:'static',verificationResult:'passed',verificationEvidence:'只检查测试 HTML，不代表浏览器验收'});
+  const done=await until(started.id);assert.equal(done.result.websiteSource.verificationMethod,'static');assert.match(done.next,/无需 task_adopt/);
+  await call('task_get',{taskId:started.id});const after=await call('project_get',{projectId:p.projectId});assert.equal(after.project.websiteSourceCandidate.fileId,done.result.websiteSource.fileId);assert.equal(after.project.websiteSource,undefined);assert.equal((await call('website_run',input)).id,started.id);
+});
 
 test('real stdio: image_select uses the original handoff result, validates comparison and synchronizes selected state',async t=>{
   const {call,until,client}=await setup(t);
@@ -267,18 +280,19 @@ test('runtime client rejects non-loopback, an old runtime and the wrong data dir
   const client = createRuntimeClient({ env: { WORKBENCH_RUNTIME_URL: 'http://127.0.0.1:' + server.address().port }, autoStart: true });
   await assert.rejects(client.call('project_list', {}), e => e.code === 'runtime_mismatch');
   assert.equal(calls, 1);
-  const { url } = await setup(t);
-  const wrongData = createRuntimeClient({ env: { WORKBENCH_RUNTIME_URL: url, WORKBENCH_DATA_DIR: join(tmpdir(), uid()) } });
+  const { url, directory } = await setup(t);
+  const wrongData = createRuntimeClient({ env: { WORKBENCH_RUNTIME_URL: url, WORKBENCH_DATA_DIR: join(directory, 'wrong-data') } });
   await assert.rejects(wrongData.call('project_list', {}), e => e.code === 'runtime_mismatch');
 });
 
 test('automatic Runtime startup is shared and survives an MCP client disconnect', async t => {
-  const directory = await mkdtemp(join(tmpdir(), 'creative-mcp-start-'));
-  const reservation = http.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
+  const scope = await createTestDirectory(t, 'creative-mcp-start');
+  const directory = scope.directory;
+  const reservation = http.createServer(); scope.defer(() => closeTestServer(reservation)); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
   const port = reservation.address().port; await new Promise(r => reservation.close(r));
   const env = { WORKBENCH_RUNTIME_URL: 'http://127.0.0.1:' + port, WORKBENCH_DATA_DIR: directory };
   const runtime = createRuntimeClient({ env, autoStart: true });
-  t.after(() => { if (runtime.startedPid) { try { process.kill(runtime.startedPid); } catch (e) { if (e.code !== 'ESRCH') throw e; } } });
+  scope.defer(() => stopTestProcess(runtime.startedPid));
   assert.deepEqual((await runtime.call('project_list', {})).projects, []);
   assert.ok(runtime.startedPid);
   const other = createRuntimeClient({ env, autoStart: true });
@@ -286,6 +300,7 @@ test('automatic Runtime startup is shared and survives an MCP client disconnect'
   assert.equal(other.startedPid, undefined);
   const transport = new StdioClientTransport({ command: process.execPath, args: [join(root, 'scripts/workbench-mcp.mjs'), '--ensure-runtime'], cwd: directory, env, stderr: 'pipe' });
   const client = new Client({ name: 'disconnect-test', version: '1.0.0' });
+  scope.defer(() => client.close());
   try { await client.connect(transport); assert.equal((await client.callTool({ name: 'project_list', arguments: {} })).isError, undefined); }
   finally { await client.close(); }
   assert.deepEqual((await runtime.call('project_list', {})).projects, []);

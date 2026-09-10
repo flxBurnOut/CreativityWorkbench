@@ -149,16 +149,18 @@
         "task_complete_handoff",
         "theme_asset_list",
         "theme_asset_apply",
-        "image_select"
+        "image_select",
+        "website_run",
+        "website_complete"
       ],
       "skills": [
         "workbench/skills/creativity-project",
         "workbench/skills/creativity-media"
       ],
       "configuration": "npm run workbench:setup",
-      "validation": "local-image-state-and-browser-tested; protocol-9-WorkBuddy-client-retest-required",
-      "protocolVersion": 9,
-      "skillVersion": "0.6.1"
+      "validation": "local-continuous-website-tests; WorkBuddy-client-retest-required",
+      "protocolVersion": 10,
+      "skillVersion": "0.7.0"
     },
     {
       "id": "service-settings",
@@ -240,6 +242,16 @@
       "endpoint": "/v1/core/image_select",
       "protocolVersion": 9,
       "validation": "local-runtime-http-and-browser-tested; remote-WorkBuddy-client-retest-required"
+    },
+    {
+      "id": "website-studio",
+      "name": "一次目标、连续网站制作与源码回传",
+      "transport": "http",
+      "endpoint": "/v1/core/website_run",
+      "completion": "/v1/core/website_complete",
+      "protocolVersion": 10,
+      "validation": "local-integration-tested; WorkBuddy-client-retest-required",
+      "scope": "自动准备资料、网站原任务交接、静态源码初稿、限定范围修改与用户选用；依赖 WorkBuddy 实际执行，不提供业务后台或云发布"
     }
   ],
   "editorModules": []

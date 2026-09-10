@@ -46,3 +46,30 @@ test('local deletion of a remotely edited project is preserved and explicitly re
   const merged=reconcileWorkspace(workspace(p),workspace(),workspace({...p,brief:'对话端新稿'}));
   assert.equal(merged.workspace.projects[0].brief,'对话端新稿');assert.deepEqual(merged.preservedRemovals,[p.title]);
 });
+
+test('typing the next website instruction merges with an incoming result on the original project',()=>{
+  const p={...createProject('文化网站','website','','p'),websiteEdit:{scope:'all',change:'下一轮草稿'},websiteRequest:{taskId:'current'}};
+  const mine={...p,websiteEdit:{scope:'content',change:'新的文案修改要求'},stage:4};
+  const theirs={...p,websiteSourceCandidate:{fileId:'actual-result.zip',taskId:'current'}};
+  const result=reconcileWorkspace(workspace(p),workspace(mine),workspace(theirs));
+  assert.equal(result.copies.length,0);assert.equal(result.workspace.activeProjectId,'p');
+  assert.deepEqual(result.workspace.projects[0].websiteEdit,mine.websiteEdit);
+  assert.deepEqual(result.workspace.projects[0].websiteSourceCandidate,theirs.websiteSourceCandidate);
+  assert.equal(result.workspace.projects[0].stage,4);
+});
+
+test('a submitted instruction can be consumed while a newer local instruction is preserved',()=>{
+  const p={...createProject('文化网站','website','','p'),websiteEdit:{scope:'all',change:'整站修改'},websiteRequest:{taskId:'old'}};
+  const mine={...p,websiteEdit:{scope:'images',change:'下一轮调整图片'}};
+  const theirs={...p,websiteEdit:undefined,websiteBrief:{scope:'all',change:'整站修改'},websiteRequest:{taskId:'new'}};
+  const result=reconcileWorkspace(workspace(p),workspace(mine),workspace(theirs));
+  assert.equal(result.copies.length,0);assert.equal(result.workspace.projects[0].websiteRequest.taskId,'new');
+  assert.deepEqual(result.workspace.projects[0].websiteEdit,mine.websiteEdit);
+});
+
+test('two people editing the website instruction still retain both conflicting drafts',()=>{
+  const p={...createProject('文化网站','website','','p'),websiteEdit:{scope:'all',change:'原要求'}};
+  const result=reconcileWorkspace(workspace(p),workspace({...p,websiteEdit:{scope:'content',change:'本机要求'}}),workspace({...p,websiteEdit:{scope:'images',change:'另一端要求'}}),()=> 'copy');
+  assert.equal(result.copies.length,1);assert.equal(result.workspace.projects[0].websiteEdit.change,'另一端要求');
+  assert.equal(result.workspace.projects[1].websiteEdit.change,'本机要求');
+});

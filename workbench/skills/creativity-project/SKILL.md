@@ -3,11 +3,13 @@ name: creativity-project
 description: 在创意工作台中创建和继续文化创作项目，保存创意、小说、脚本、美术方向和概念设定；通过核心 MCP 与工作台页面共享草稿。
 description_zh: 在 WorkBuddy 对话中完成创意工作台的项目与文字创作。
 description_en: Create and edit cultural creative projects and written drafts through the Creativity Workbench MCP tools.
-version: 0.6.1
+version: 0.7.0
 author: CreativityWorkbench
 ---
 
 # 创意工作台：项目与创作
+
+**网站连续任务优先路由：task_get 返回 kind=website 且 args.guided=true 时，读取 [一次目标与网站连续制作](references/website-studio.md)，用原任务接收 result.zip 或 website_complete；不套用图片规则，不新建任务，不额外 task_adopt。** 新网站也可用 website_run 开始，当前 agent 继续完成实际代码。
 
 **收到网页已有任务 ID、request.json 或交接请求时，先 task_get 原 ID，接续原任务。** 不从下面的新建流程起步，不调用 task_start 另建任务，不用 media_import 代替完成交接。此场景先读 [已有任务交接](references/existing-handoff.md)，再执行对应媒体操作。
 
@@ -47,7 +49,7 @@ author: CreativityWorkbench
 
 ## 验收与传参兼容
 
-本版要求核心协议 9、27 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+本版要求核心协议 10、29 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
 
 ## 文创文旅网站与主题视觉素材
 

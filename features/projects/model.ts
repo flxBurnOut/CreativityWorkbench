@@ -28,10 +28,11 @@ export interface SiteItem { title:string; text:string; tag:string; assetId?:stri
 export interface SiteSection {kind:'text'|'gallery'|'faq';title:string;body:string;items:SiteItem[]}
 export interface SiteSpec {title:string;description:string;accent:string;theme:'paper'|'night';pages:{id:string;title:string;intro:string;sections:SiteSection[]}[];limitations:string[]}
 export interface WebsiteDraft {spec:SiteSpec;builtSpec?:SiteSpec;previewFileId?:string;zipFileId?:string}
-export interface WebsiteRequest {prompt:string;basis:string;assetIds:string[];bundleFileId?:string;source?:string;taskId?:string}
+export interface WebsiteBrief {goal:string;change:string;scope:'all'|'appearance'|'content'|'images'|'interaction';autoAssets:boolean}
+export interface WebsiteRequest {prompt:string;basis:string;assetIds:string[];bundleFileId?:string;baseFileId?:string;source?:string;taskId?:string}
 export interface WebsiteSource {verificationMethod?:'not-tested'|'static'|'browser'|'user-browser';verificationResult?:'not-tested'|'passed'|'failed';verificationEvidence?:string;fileId:string;entryCount:number;description:string;instructions:string;verification:string;taskId?:string;requestSource?:string;importedAt:number;previewPath?:string}
 export interface FlowRecord {id:string;type:WorkType;target:string;createdAt:number;origin:string;taskId?:string;fingerprint:string;value:any;dependencies:{key:string;label:string;fingerprint:string}[]}
-export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];transfer?:Project['transfer'];transfers?:Project['transfers']}
+export interface TypeBranch {brief?:string;art?:Project['art'];references?:StyleReference[];concepts?:Concept[];delivery?:Project['delivery'];requests?:string[];novel?:Project['novel'];novelReferenceIds?:string[];video?:VideoDraft;website?:WebsiteDraft;websiteRequest?:WebsiteRequest;websiteBrief?:WebsiteBrief;websiteEdit?:{change:string;scope:WebsiteBrief['scope']};studioRevision?:string;websiteSource?:WebsiteSource;websiteSourceCandidate?:WebsiteSource;designPackage?:Project['designPackage'];transfer?:Project['transfer'];transfers?:Project['transfers']}
 export interface Concept {
   id: string; category: Category; name: string; description: string;
   candidateAssetId?: string; savedAssetId?: string; prompt: string; revisionRequest: string;
@@ -51,7 +52,7 @@ export interface Project {
   delivery: { notes: string; textFormat: string; ratio: string; duration: string };
   upstreamChanged: boolean;
   novel?: { title: string; text: string; taskId: string };
-  video?:VideoDraft; website?:WebsiteDraft; websiteRequest?:WebsiteRequest;
+  video?:VideoDraft; website?:WebsiteDraft; websiteRequest?:WebsiteRequest;websiteBrief?:WebsiteBrief;websiteEdit?:{change:string;scope:WebsiteBrief['scope']};studioRevision?:string;
   websiteSource?:WebsiteSource; websiteSourceCandidate?:WebsiteSource; novelReferenceIds?:string[]; variants?:Partial<Record<WorkType,TypeBranch>>;
   transfer?:WorkflowTransfer;transfers?:WorkflowTransfer[];
   flow?:{version:1;records:FlowRecord[]}; designPackage?:{fileId:string;source:string;taskId:string};

@@ -29,6 +29,7 @@ export function WebsitePreview({fileId}:{fileId:string}) {
   return <div className="site-output"><div className="inline-actions"><Button variant={!mobile?'secondary':'ghost'} onClick={()=>setMobile(false)}>桌面预览</Button><Button variant={mobile?'secondary':'ghost'} onClick={()=>setMobile(true)}>手机预览</Button><span className="muted">可点击导航、搜索和展开内容</span></div><div className={'site-frame '+(mobile?'is-mobile':'')}><iframe title="生成网站交互预览" src={outputUrl(fileId)} sandbox="allow-scripts" referrerPolicy="no-referrer" /></div></div>;
 }
 export function OutputTaskPreview({task}:{task:GenerationTask}) {
+  const [previewOpen,setPreviewOpen]=useState(false);
   const r=task.result;if(!r)return null;
   const file=r.videoClip||r.videoFinal;
   return <>
@@ -37,8 +38,9 @@ export function OutputTaskPreview({task}:{task:GenerationTask}) {
     {file?.validation&&<p role="status">规格检查：{file.validation.status==='passed'?'通过':file.validation.status==='failed'?'未通过':'未验证'} · 实际 {file.width}×{file.height} / {file.duration.toFixed(2)} 秒。{file.validation.issues.join(' ')}</p>}
     {file&&<div className="media-result"><video controls preload="none" src={outputUrl(file.fileId)} aria-label="生成视频预览"/><DownloadFile fileId={file.fileId} name="创意视频.mp4">下载 MP4</DownloadFile>{r.videoFinal&&<DownloadFile fileId={r.videoFinal.subtitleFileId} name="字幕.srt">下载字幕 SRT</DownloadFile>}</div>}
     {r.videoAudio&&<div className="media-result"><audio controls src={outputUrl(r.videoAudio.fileId)}/><DownloadFile fileId={r.videoAudio.fileId} name="旁白.wav">下载旁白</DownloadFile></div>}
-    {r.website&&<><p>网站包含 {r.website.spec.pages.map(p=>p.title).join('、')}。</p>{r.website.spec.limitations.length>0&&<p role="status">尚未实现的要求：{r.website.spec.limitations.join('；')}</p>}<details><summary>预览新网站</summary>{r.website.previewFileId&&<WebsitePreview fileId={r.website.previewFileId}/>}</details>{r.website.zipFileId&&<DownloadFile fileId={r.website.zipFileId} name="网站源码.zip">下载网站源码与素材 ZIP</DownloadFile>}</>}
-    {r.websiteRequest&&<><p>网站提示词与素材包已准备；网站实现与功能验证由执行模型完成。</p><details><summary>任务包中的实际提示词</summary><textarea readOnly rows={8} aria-label="已准备的网站提示词" value={r.websiteRequest.prompt}/></details>{r.websiteRequest.bundleFileId&&<DownloadFile fileId={r.websiteRequest.bundleFileId} name="网站生成任务与素材.zip">下载网站生成任务包</DownloadFile>}</>}
+    {r.website&&<><p>网站包含 {r.website.spec.pages.map(p=>p.title).join('、')}。</p>{r.website.spec.limitations.length>0&&<p role="status">尚未实现的要求：{r.website.spec.limitations.join('；')}</p>}<details open={previewOpen} onToggle={event=>setPreviewOpen(event.currentTarget.open)}><summary>预览新网站</summary>{previewOpen&&r.website.previewFileId&&<WebsitePreview fileId={r.website.previewFileId}/>}</details>{r.website.zipFileId&&<DownloadFile fileId={r.website.zipFileId} name="网站源码.zip">下载网站源码与素材 ZIP</DownloadFile>}</>}
+    {r.websiteSource&&<><p>实际网站源码已回传，可在网站制作主页面预览并使用这个版本。</p><DownloadFile fileId={r.websiteSource.fileId} name="网站初稿.zip">下载实际网站 ZIP</DownloadFile></>}
+    {r.websiteRequest&&!r.websiteSource&&<><p>网站提示词与素材包已准备；网站实现与功能验证由执行模型完成。</p><details><summary>任务包中的实际提示词</summary><textarea readOnly rows={8} aria-label="已准备的网站提示词" value={r.websiteRequest.prompt}/></details>{r.websiteRequest.bundleFileId&&<DownloadFile fileId={r.websiteRequest.bundleFileId} name="网站生成任务与素材.zip">下载网站生成任务包</DownloadFile>}</>}
     {r.designPackage&&<><p>当前创意、设计设定和实际参考文件已打包；资料包不代表已生成 3D 模型。</p><DownloadFile fileId={r.designPackage.fileId} name="设计资料.zip">下载设计资料包</DownloadFile></>}
   </>;
 }
@@ -136,6 +138,7 @@ function downloadPrompt(prompt:string) {
   const a=document.createElement('a');a.href=url;a.download='网站生成提示词.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 export function WebsiteOutput({project,edit,generation,notice}:Props) {
+  const [legacyPreviewOpen,setLegacyPreviewOpen]=useState(false);
   const request=project.websiteRequest;const prompt=finalWebsitePrompt(project);const stale=websitePromptStale(project);const selected=websiteAssetIds(project);
   const roles=assetRoles(project,selected);
   const change=(text?:string,confirm=false)=>edit(p=>({...p,websiteRequest:{...p.websiteRequest,prompt:confirm?finalWebsitePrompt(p):text??buildWebsitePrompt(p),basis:websitePromptBasis(p),assetIds:websiteAssetIds(p)}}));
@@ -145,6 +148,7 @@ export function WebsiteOutput({project,edit,generation,notice}:Props) {
     // Auto-derived prompts follow selection; explicit edits remain for review.
     return p.websiteRequest?draft:{...draft,websiteRequest:{...draft.websiteRequest,prompt:buildWebsitePrompt(draft),basis:websitePromptBasis(draft)}};
   });
+  if(project.websiteBrief)return <div className="stage-stack"><section className="surface"><h3>网站统一制作说明</h3><p>网站目标和修改要求在“返回网站制作”中统一编辑；这里查看实际沿用资料和交付记录。</p><details><summary>查看完整任务说明（自动整理）</summary><textarea readOnly rows={12} aria-label="完整网站任务说明" value={prompt}/></details></section><WebsiteSourcePanel project={project} edit={edit} notice={notice}/></div>;
   return <div className="stage-stack">
     <ol className="delivery-route" aria-label="网站制作的三个步骤">
       <li className={!request?.bundleFileId?'is-active':''}><button type="button" onClick={()=>document.getElementById('website-step-1')?.scrollIntoView({behavior:'smooth',block:'start'})}><strong>1. 准备需求</strong><span>确认内容与素材</span></button></li>
@@ -168,6 +172,6 @@ export function WebsiteOutput({project,edit,generation,notice}:Props) {
       {request?.bundleFileId&&<div><p>{request.source===websiteRequestSource(project)?'任务包已保存，可以交给 WorkBuddy 执行。':'旧任务包已保留；当前资料变化后需重新准备。'}</p><DownloadFile fileId={request.bundleFileId} name="网站生成任务与素材.zip">下载任务与素材 ZIP</DownloadFile></div>}
     </section>
     <WebsiteSourcePanel project={project} edit={edit} notice={notice}/>
-    {project.website&&<details className="surface"><summary>旧版网站与交付文件</summary><p>历史成果继续保留，新网站通过上面的流程制作。</p>{project.website.previewFileId&&<WebsitePreview fileId={project.website.previewFileId}/>} {project.website.zipFileId&&<DownloadFile fileId={project.website.zipFileId} name="旧网站源码.zip">下载旧网站 ZIP</DownloadFile>}</details>}
+    {project.website&&<details className="surface" open={legacyPreviewOpen} onToggle={event=>setLegacyPreviewOpen(event.currentTarget.open)}><summary>旧版网站与交付文件</summary><p>历史成果继续保留，新网站通过上面的流程制作。</p>{legacyPreviewOpen&&project.website.previewFileId&&<WebsitePreview fileId={project.website.previewFileId}/>} {project.website.zipFileId&&<DownloadFile fileId={project.website.zipFileId} name="旧网站源码.zip">下载旧网站 ZIP</DownloadFile>}</details>}
   </div>;
 }
