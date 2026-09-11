@@ -1,6 +1,16 @@
-当前更新：协议 **13**、**31** 个工具、Skills **0.10.0**。已有器皿通过 `craft_generate` 的 `textureOf` + `textureMode=image` 复用现有生图服务，本机贴合外壁；不需要 HY/COS。WorkBuddy 对话使用 `dispatch=conversation`，在原任务回传 PNG，再查询到 Blender/GLB 完成。详见[平面图案说明](CRAFT_PATTERN_2026-09-10.md)。旧 HY 路径及 COS 配置见[文化纹理说明](CRAFT_TEXTURE_2026-09-10.md)。使用新包前重启旧 Runtime，再在 WorkBuddy 中实际复测。下方带日期的历史结果不代表本次加载通过。
+当前更新：核心协议 **14**、**31** 个工具，MCP 与 Skills 发布版本 **0.11.0**。本版支持单段美术提示词与既有器皿图案流程；美术模块见[美术提示词说明](ART_PROMPT_EDITOR_2026-09-10.md)，已有器皿通过 `craft_generate` 的 `textureOf` + `textureMode=image` 复用现有生图服务，本机贴合外壁，不需要 HY/COS。WorkBuddy 对话使用 `dispatch=conversation`，在原任务回传 PNG，再查询到 Blender/GLB 完成。详见[平面图案说明](CRAFT_PATTERN_2026-09-10.md)。旧 HY 路径及 COS 配置见[文化纹理说明](CRAFT_TEXTURE_2026-09-10.md)。下方带日期的历史结果不代表本次加载通过。
 
 # WorkBuddy 核心 Skills 与 MCP 接入
+
+## 版本约定与升级
+
+MCP server 与两项 Skills 使用同一发布版本，不采用独立升级策略。唯一发布版本常量是 `lib/workbench/version.mjs` 中的 `WORKBENCH_VERSION`。MCP `initialize` 返回的 `serverInfo.version` 直接读取该常量；`npm run workbench:setup` 在打包前将它同步到 manifest 的 `workbuddy-core-mcp.skillVersion` 与两个 `SKILL.md` 的 frontmatter，历史说明中的版本不批量改写。
+
+`lib/workbench/protocol.mjs` 的 `CORE_PROTOCOL` 是共享 Runtime 的工具兼容性修订号，和发布版本分别维护；它也不同于 MCP 握手协商的标准协议版本。本次仅修正发布声明，核心协议保持 14。
+
+升级时修改发布版本常量；只有工具契约或任务生命周期改变时才另行递增核心协议号。随后执行 `npm run workbench:setup`、`npm test`，提交常量和生成的元数据。测试会实际启动 stdio MCP、读取 `initialize` 回包，并核对 manifest 资源、磁盘 manifest 和两份 Skills，遗漏同步会阻止 CI 通过。
+
+已打开的 MCP 进程不会因源码改变而更新握手缓存。使用者需在 WorkBuddy 中重新连接或重启该 MCP；Skills 有更新时重新导入生成包。普通本地握手测试不等于 WorkBuddy 已重新加载。若核心协议从 13 升至 14，还需按后文说明重启旧 Runtime。
 
 本轮提供本地 stdio MCP、两项 Skills 和本机连接配置。当前主流程为项目、文字、概念图、单镜头视频，以及网站提示词和素材交接。网站完整实现由当前 agent 负责，工作台不提供网站业务功能；旧模板与成品继续保留。连接器市场发布、专家插件、3D 与长篇编排不在本轮范围。详见 [提示词与 Harness](PROMPT_HARNESS.md)。
 

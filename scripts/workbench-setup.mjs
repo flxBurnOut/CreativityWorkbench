@@ -5,10 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { zipSync } from 'fflate';
 import { skillCreativeRules } from '../lib/workbench/prompts.mjs';
 import { currentKnowledge, knowledgeText } from '../lib/workbench/knowledge.mjs';
+import { syncReleaseMetadata } from '../lib/workbench/release-metadata.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = join(root, 'work', 'workbuddy-core');
 const skills = join(root, 'workbench', 'skills');
+await syncReleaseMetadata(root);
 await mkdir(output, { recursive: true });
 const names = (await readdir(skills)).sort();
 for (const name of names) {

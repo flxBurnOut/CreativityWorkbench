@@ -1,5 +1,7 @@
 # 项目约定
 
+- 2026-09-11 发布版本：MCP server 与两项 Skills 同步发布，`lib/workbench/version.mjs` 的 WORKBENCH_VERSION 为唯一发布版本常量；CORE_PROTOCOL 仍是独立的 Runtime 兼容修订号。升级后运行 workbench:setup 同步 manifest 的核心 skillVersion/protocolVersion 和 Skills frontmatter，再运行测试；历史能力和带日期说明不批量改号。真实 stdio initialize 握手、manifest 与 Skills 一致性由 tests/mcp-version.test.mjs 检查。不把本机握手通过称为 WorkBuddy 已重新加载。
+
 - 2026-09-10 美术提示词：当前协议 14、31 工具、Skills 0.11.0。美术模块只编辑一段 art.fullPrompt，AI 候选对照后替换；旧四分项完整合并显示，编辑或采用后清空旧分项，历史与类型分支保留。参考图移到准备图片并随实际出图发送。新图统一用当前提示词，旧图编辑默认保留原风格。详见 docs/ART_PROMPT_EDITOR_2026-09-10.md。
 
 - 2026-09-10 平面图案：协议 13、31 工具、Skills 0.10.0。网页默认 craft_generate textureMode=image + textureOf，复用 WorkBuddy/外部图片服务生成平面 PNG，本机脚本仅贴到内置器皿外壁；无 HY/COS 依赖，内壁、附件、网格及历史保留。原任务通过 task_complete_handoff 回传 PNG，再本机贴图到 result.craftAsset 才成功，不调用 craft_complete_plan。生图先保存图片再建模，未知请求不重发，取消不采用晚到结果，单进程与内存/文件预算保持。图片引用参与备份，清理只删除验证过的本任务副本。旧无 textureMode 的纹理调用仍走 HY 兼容路径，不自动切换供应商。详见 docs/CRAFT_PATTERN_2026-09-10.md。
