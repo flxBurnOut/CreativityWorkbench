@@ -36,7 +36,7 @@ export function ResultStudio({project,edit,notice,generation,flush,synchronize,o
   const stale=ready&&!sameTaskSource(taskSource(project,kind,task!.args),task!.source);
   const visibleNovel=ready?novel:project.novel,visibleClip=ready?clip:shot.clip;
   const provider= generation.videoProvider||'workbuddy';
-  const context=()=>`请通过创意工作台读取原项目 ${project.id}，不要新建副本。\n作品目标：${goal}\n${change.trim()?'本次修改：'+change:'请根据目标直接创作完整短篇，未指定细节由你合理补齐。'}\n沿用项目已保存的文化资料与设定，事实和虚构分开。将完整正文写回该项目 novel.title 和 novel.text，保留已有历史，不仅保存梗概。完成后读取项目核对并交付实际文件。`;
+  const context=()=>`请通过粤象·岭南文化创意工作台读取原项目 ${project.id}，不要新建副本。\n作品目标：${goal}\n${change.trim()?'本次修改：'+change:'请根据目标直接创作完整短篇，未指定细节由你合理补齐。'}\n沿用项目已保存的文化资料与设定，事实和虚构分开。将完整正文写回该项目 novel.title 和 novel.text，保留已有历史，不仅保存梗概。完成后读取项目核对并交付实际文件。`;
   const withKnowledge=(p:Project)=>p.knowledge?.length?p:applyKnowledge(p,suggestWebsiteMaterials(goal).knowledgeIds);
   const copyWriting=async()=>{try{edit(withKnowledge);await flush();await navigator.clipboard.writeText(context());notice('已复制完整要求，交给 WorkBuddy 写回原项目即可。');}catch{notice('请复制下方完整要求，继续同一项目。');}setShowHandoff(true);};
   const sync=async()=>{await synchronize(true);await generation.refresh?.(true);};

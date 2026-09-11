@@ -1,5 +1,7 @@
 # 项目约定
 
+- 2026-09-10 美术提示词：当前协议 14、31 工具、Skills 0.11.0。美术模块只编辑一段 art.fullPrompt，AI 候选对照后替换；旧四分项完整合并显示，编辑或采用后清空旧分项，历史与类型分支保留。参考图移到准备图片并随实际出图发送。新图统一用当前提示词，旧图编辑默认保留原风格。详见 docs/ART_PROMPT_EDITOR_2026-09-10.md。
+
 - 2026-09-10 平面图案：协议 13、31 工具、Skills 0.10.0。网页默认 craft_generate textureMode=image + textureOf，复用 WorkBuddy/外部图片服务生成平面 PNG，本机脚本仅贴到内置器皿外壁；无 HY/COS 依赖，内壁、附件、网格及历史保留。原任务通过 task_complete_handoff 回传 PNG，再本机贴图到 result.craftAsset 才成功，不调用 craft_complete_plan。生图先保存图片再建模，未知请求不重发，取消不采用晚到结果，单进程与内存/文件预算保持。图片引用参与备份，清理只删除验证过的本任务副本。旧无 textureMode 的纹理调用仍走 HY 兼容路径，不自动切换供应商。详见 docs/CRAFT_PATTERN_2026-09-10.md。
 
 - 2026-09-10 文化纹理：协议 12、31 工具、Skills 0.9.0。craft_generate 可用 textureOf 指定本项目已有模型；沿用原 goal，可选 texturePrompt。先本机整理 UV，再私有 COS 中转，hy-3d-texture 只生成 1024 颜色图，贴回原 Blender 网格并校验几何哈希。保持器形、原版本与文件引用；不把返回的模型或缩略图直接替换为成果。未知提交不自动重发，取消后不采用晚到结果。只有同 Token Hub 地址才可复用文字密钥，COS 凭据单独配置；本机回归不等于真实 COS/Token Hub 成功。详见 docs/CRAFT_TEXTURE_2026-09-10.md。

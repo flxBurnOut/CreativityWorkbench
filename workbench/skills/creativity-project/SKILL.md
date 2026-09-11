@@ -3,7 +3,7 @@ name: creativity-project
 description: 在创意工作台中创建和继续文化创作项目，保存创意、小说、脚本、美术方向和概念设定；通过核心 MCP 与工作台页面共享草稿。
 description_zh: 在 WorkBuddy 对话中完成创意工作台的项目与文字创作。
 description_en: Create and edit cultural creative projects and written drafts through the Creativity Workbench MCP tools.
-version: 0.10.0
+version: 0.11.0
 author: CreativityWorkbench
 ---
 
@@ -51,7 +51,7 @@ author: CreativityWorkbench
 
 ## 验收与传参兼容
 
-本版要求核心协议 13、31 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+本版要求核心协议 14、31 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
 
 ## 文创文旅网站与主题视觉素材
 

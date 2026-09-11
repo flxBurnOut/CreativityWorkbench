@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>粤象 · 镬耳窗</title>
+  <rect width="64" height="64" rx="16" fill="#293F35"/>
+  <path d="M14 45V34C20 34 20 28 20 22C20 18 23 16 26 18C28 20 27 24 27 27C27 30 29 32 32 32C35 32 37 30 37 27C37 24 36 20 38 18C41 16 44 18 44 22C44 28 44 34 50 34V45" stroke="#F5F1DF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M14 47H50" stroke="#F5F1DF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M29 47V40H35V47" fill="#F5F1DF"/>
+</svg>

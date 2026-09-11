@@ -30,7 +30,7 @@ export function stageInstruction(project: Project) {
   return [
     { title: '先确定这次要创作什么', action: '写下想法，点击“展开创意方案”，或者直接填写方案。生成后选择采用，再整理内容。', result: '一份明确的创意方案和文化背景' },
     { title: type === 'novel' ? '整理故事，再写正文' : type === 'website' ? '写清网站内容与实际功能' : type === 'video' ? '整理视频要表达的内容' : '把创意整理成制作依据', action: '可以生成整份初稿，也可以直接粘贴已有内容。切换小节，下方提出修改，比较建议后采用。', result: type === 'novel' ? '故事梗概、人物和背景；正文在最后一步创作' : '下一步可直接使用的内容方案' },
-    { title: '确定图片应该是什么样子', action: '先生成或填写视觉方向，再按需要调整材质、配色和保持项。参考图片可选；这一步只整理画风文字。', result: '后续图片与视频共用的美术要求' },
+    { title: '写好一段美术风格提示词', action: '直接编写并保存，或让 AI 根据当前内容起草。比较候选后替换，后续新图使用当前提示词；参考图片在下一步添加。', result: '一段后续出图使用的美术风格提示词' },
     { title: '为作品准备真正要用的图片', action: '从内容提取对象，或手动添加人物、场景、物件。生成或上传图片后，点击“选用此图”，再带入作品。需要局部调整时点击“修改图片”。', result: '已选用的概念图；可用于视频首帧或网站素材' },
     { title: type === 'novel' ? '创作正文，确认后下载' : type === 'video' ? '描述镜头，生成并下载视频' : type === 'website' ? '把需求做成网站，再收回源码' : type === 'craft' ? '导出 3D 制作前期资料' : '导出资料，或选择下一种作品形式', action: type === 'novel' ? '填写补充要求并生成短篇。采用结果后可直接修改正文，下载 TXT 或 Markdown。' : type === 'video' ? '填写单镜头要求与时长，可选首帧。生成结果会显示在本页，采用后可以下载；更多镜头和声音按需展开。' : type === 'website' ? '按下方三步完成：准备任务 → 交给 WorkBuddy 制作 → 导入源码预览。任务包准备好后，还需要执行网站制作。' : '打包当前已保存的内容与实际图片，采用结果后下载资料 ZIP。', result: WORK_GUIDES[type].output },
   ][project.stage];
@@ -50,6 +50,6 @@ export function taskMatchesStep(project: Project, task: { kind: string; args: Re
 }
 
 export function workBuddyRequest(project: Project) {
-  if(project.type==='craft')return `请使用创意工作台 Skills 和 MCP 继续项目 ${JSON.stringify(project.title)}（项目 ID：${project.id}）的三维资产制作。先读取项目与现有任务；如有未完成 craft-model 任务，必须沿用原任务与交接要求回传造型方案，不要另建任务。目标：${project.craftGoal||project.craftRequest?.goal||project.idea}。模型由工作台通过 Blender 生成，完成后在网页查看并下载 .blend / .glb；不要将造型方案或图片当作模型交付。`;
-  return `请通过创意工作台的 MCP 和 Skills 继续项目 ${JSON.stringify(project.title)}（项目 ID：${project.id}）。先检查连接并读取最新项目，不要新建同名副本。\n当前作品：${WORK_GUIDES[project.type].title}；当前步骤：${FLOW_LABELS[project.stage]}。\n${stageInstruction(project).action}\n沿用项目已保存的文化依据、内容与实际素材。先说明准备做什么，再按我的要求完成、保存并交付；需要我做审美选择时展示候选。不要把任务包、概念图或待执行请求当成已完成的成品。`;
+  if(project.type==='craft')return `请使用粤象·岭南文化创意工作台 Skills 和 MCP 继续项目 ${JSON.stringify(project.title)}（项目 ID：${project.id}）的三维资产制作。先读取项目与现有任务；如有未完成 craft-model 任务，必须沿用原任务与交接要求回传造型方案，不要另建任务。目标：${project.craftGoal||project.craftRequest?.goal||project.idea}。模型由工作台通过 Blender 生成，完成后在网页查看并下载 .blend / .glb；不要将造型方案或图片当作模型交付。`;
+  return `请通过粤象·岭南文化创意工作台的 MCP 和 Skills 继续项目 ${JSON.stringify(project.title)}（项目 ID：${project.id}）。先检查连接并读取最新项目，不要新建同名副本。\n当前作品：${WORK_GUIDES[project.type].title}；当前步骤：${FLOW_LABELS[project.stage]}。\n${stageInstruction(project).action}\n沿用项目已保存的文化依据、内容与实际素材。先说明准备做什么，再按我的要求完成、保存并交付；需要我做审美选择时展示候选。不要把任务包、概念图或待执行请求当成已完成的成品。`;
 }

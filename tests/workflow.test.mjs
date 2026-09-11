@@ -59,7 +59,7 @@ for(const type of ['novel','video','website','craft','undecided'])test(type+': a
   });
   response={title:'Q-027',brief:'沿用当代潮汕生活，保留编号 Q-027',culture:h.p.culture};await h.adopt(await h.run('creative',{action:'improve'}));
   response={sections:Object.fromEntries(contentKeys[type].map(k=>[k,'已确认 '+k+'：阿澄、旧伞与 Q-027']))};await h.adopt(await h.run('content',{action:'generate'}));assert.match(JSON.parse(calls.at(-1).messages[1].content).brief,/Q-027/);
-  response={direction:'当代写实',material:'棉布与竹柄',palette:'冷灰',constraints:'无古装',fullPrompt:'完整美术表达'};await h.adopt(await h.run('art'));assert.match(JSON.stringify(JSON.parse(calls.at(-1).messages[1].content).content),/已确认/);
+  response={fullPrompt:'当代写实，棉布与竹柄，冷灰配色，无古装'};await h.adopt(await h.run('art'));assert.match(JSON.stringify(JSON.parse(calls.at(-1).messages[1].content).content),/已确认/);
   response={objects:[{category:'object',name:'旧伞',description:'阿澄的竹柄旧伞',sourceKeys:[contentKeys[type][0]],usage:type==='website'?'作品详情图':'主体形体参考'}]};let p=await h.adopt(await h.run('objects'));const objectId=p.concepts[0].id;
   response={objects:[{id:objectId,category:'object',name:'修补后的旧伞',description:'保留竹柄，增加用户指定的补丁',sourceKeys:[contentKeys[type][0]]}]};p=await h.adopt(await h.run('objects'),{objectIds:[objectId]});assert.equal(p.concepts.length,1);assert.equal(p.concepts[0].id,objectId);assert.equal(p.concepts[0].usage,type==='website'?'作品详情图':'主体形体参考');
   p=await h.adopt(await h.run('image',{provider:'external',ratio:'3:2',action:'generate',objectId}));const assetId=p.concepts[0].candidateAssetId;p.concepts[0].savedAssetId=assetId;p=await h.save(p);

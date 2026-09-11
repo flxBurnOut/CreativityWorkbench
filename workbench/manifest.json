@@ -165,8 +165,8 @@
       ],
       "configuration": "npm run workbench:setup",
       "validation": "local-continuous-website-tests; WorkBuddy-client-retest-required",
-      "protocolVersion": 13,
-      "skillVersion": "0.10.0"
+      "protocolVersion": 14,
+      "skillVersion": "0.11.0"
     },
     {
       "id": "service-settings",
