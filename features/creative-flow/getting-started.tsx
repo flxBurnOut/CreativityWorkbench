@@ -6,14 +6,22 @@ import { FLOW_LABELS, TYPE_ORDER, WORK_GUIDES, hasStageDraft, optionalStage, sta
 
 export const workIcons: Record<WorkType, IconName> = { novel: 'book', video: 'film', website: 'globe', craft: 'gift', undecided: 'leaf' };
 
+const homeDescriptions: Record<WorkType, string> = {
+  novel: '从人物和情节出发，创作一篇完整短篇。',
+  video: '描述一个连续镜头，把想象变成动态画面。',
+  website: '说清网站目标，制作后预览并逐步修改。',
+  craft: '描述器物或建筑，生成可旋转查看的三维资产。',
+  undecided: '先保存想法，作品形式稍后决定。',
+};
+
 export function CapabilityCards({ onCreate }: { onCreate: (type: WorkType) => void }) {
   return <section className="capabilities" aria-labelledby="capabilities-title">
-    <div className="section-heading"><div><h2 id="capabilities-title">你想做出什么？</h2><p>选择一个目标，工作台会按对应流程带你开始。</p></div><Button variant="ghost" onClick={() => onCreate('undecided')}>还没确定，先记想法 <Icon name="arrow" size={15}/></Button></div>
+    <div className="section-heading"><div><p className="home-section-label">开始一件新作品</p><h2 id="capabilities-title">你想做出什么？</h2><p>选一种形式，写下目标，就可以开始。</p></div></div>
     <div className="capability-grid">{TYPE_ORDER.filter(type => type !== 'undecided').map(type => <button type="button" className="capability-card" key={type} onClick={() => onCreate(type)}>
-      <span className="capability-icon"><Icon name={workIcons[type]} size={23}/></span><span className="capability-heading"><strong>{WORK_GUIDES[type].title}</strong></span>
-      <span className="capability-description">{WORK_GUIDES[type].description}</span><span className="capability-output">{WORK_GUIDES[type].output}</span><span className="capability-start">{type === 'craft' ? '开始生成资产' : type === 'novel' ? '开始写故事' : type === 'video' ? '开始做视频' : '开始做网站'} <Icon name="arrow" size={16}/></span>
+      <span className="capability-heading"><span className="capability-icon"><Icon name={workIcons[type]} size={23}/></span><strong>{WORK_GUIDES[type].title}</strong></span>
+      <span className="capability-description">{homeDescriptions[type]}</span><span className="capability-footer"><span className="capability-output">{WORK_GUIDES[type].output}</span><span className="capability-start">{type === 'craft' ? '开始生成' : type === 'novel' ? '开始写作' : '开始制作'} <Icon name="arrow" size={16}/></span></span>
     </button>)}</div>
-    <details className="shared-capabilities"><summary>文化资料与其他能力</summary><p>文化资料、图片素材与详细编辑可在对应作品中按需打开。</p></details>
+    <div className="capabilities-secondary"><Button variant="ghost" onClick={() => onCreate('undecided')}>还没确定？先记下想法 <Icon name="arrow" size={15}/></Button><details className="shared-capabilities"><summary>文化资料与辅助工具</summary><p>进入作品后，可按需查阅文化资料、准备图片素材和打开详细编辑。</p></details></div>
   </section>;
 }
 
@@ -33,7 +41,7 @@ export function StepGuide({ project, onStage }: { project: Project; onStage: (st
 export function WorkflowHelp({ initialType = 'novel', project, notice, onSettings }: { initialType?: WorkType; project?: Project | null; notice: (message: string) => void; onSettings: () => void }) {
   const [type, setType] = useState<WorkType>(project?.type ?? initialType);
   const guide = WORK_GUIDES[type];
-  const request = project ? workBuddyRequest(project) : `请使用创意工作台 Skills 和 MCP，先检查连接，再帮我${guide.title}。示例目标：${guide.example}。沿用明确的岭南文化依据，保存到工作台项目；生成后展示结果，需要我选择时再采用。`;
+  const request = project ? workBuddyRequest(project) : `请使用粤象·岭南文化创意工作台 Skills 和 MCP，先检查连接，再帮我${guide.title}。示例目标：${guide.example}。沿用明确的岭南文化依据，保存到工作台项目；生成后展示结果，需要我选择时再采用。`;
   return <div className="workflow-help">
     <p>先描述作品目标，直接制作并查看结果。详细设定按需展开，不要求逐阶段填表。</p>
     <div className="help-types" aria-label="查看各类作品流程">{TYPE_ORDER.map(value => <button type="button" key={value} aria-pressed={type === value} onClick={() => setType(value)}><Icon name={workIcons[value]} size={17}/>{WORK_GUIDES[value].title}</button>)}</div>
@@ -46,6 +54,6 @@ export function WorkflowHelp({ initialType = 'novel', project, notice, onSetting
     ].map(([title, detail], i) => <li key={title}><span>{i + 1}</span><div><h4>{title}</h4><p>{detail}</p></div></li>)}</ol>
     <Button variant="secondary" onClick={onSettings}>打开生成服务设置</Button>
     <h3>从哪里找文化依据</h3><p>网站可在“本次目标与资料”查看；其他作品可打开详细编辑，再在“确定创意”点击“选择文化资料”，按元素或地域筛选、查看出处并勾选。选中的事实会进入后续生成；自己的时代背景、人物与虚构设定继续写在“当前项目的文化语境”。可下载本次文化依据，网站任务包也会附上资料。WorkBuddy 对话可直接请求搜索并选用相关条目。</p>
-    <details className="help-workbuddy"><summary>也可以在 WorkBuddy 对话中操作</summary><p>先导入本项目 Skills 并连接 MCP，再把下面这段话发给 WorkBuddy。它会读取并保存同一项目，回到网页即可查看成果。</p><p className="muted">对话文字创作使用 WorkBuddy 当前模型，无需额外文字密钥。图片和视频取决于已接入的实际服务。</p><textarea readOnly rows={6} aria-label="发给 WorkBuddy 的操作说明" value={request}/><Button icon="copy" onClick={() => void navigator.clipboard.writeText(request).then(() => notice('已复制，请粘贴到已连接创意工作台的 WorkBuddy 对话')).catch(() => notice('复制失败，请选中文字后复制。'))}>复制给 WorkBuddy</Button><p className="muted">首次使用需在 WorkBuddy 中加载本项目的两项技能与连接配置，再粘贴上面的操作说明。</p></details>
+    <details className="help-workbuddy"><summary>也可以在 WorkBuddy 对话中操作</summary><p>先导入本项目 Skills 并连接 MCP，再把下面这段话发给 WorkBuddy。它会读取并保存同一项目，回到网页即可查看成果。</p><p className="muted">对话文字创作使用 WorkBuddy 当前模型，无需额外文字密钥。图片和视频取决于已接入的实际服务。</p><textarea readOnly rows={6} aria-label="发给 WorkBuddy 的操作说明" value={request}/><Button icon="copy" onClick={() => void navigator.clipboard.writeText(request).then(() => notice('已复制，请粘贴到已连接粤象·岭南文化创意工作台的 WorkBuddy 对话')).catch(() => notice('复制失败，请选中文字后复制。'))}>复制给 WorkBuddy</Button><p className="muted">首次使用需在 WorkBuddy 中加载本项目的两项技能与连接配置，再粘贴上面的操作说明。</p></details>
   </div>;
 }

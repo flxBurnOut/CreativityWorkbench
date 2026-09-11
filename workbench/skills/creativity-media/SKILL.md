@@ -3,7 +3,7 @@ name: creativity-media
 description: 通过创意工作台 MCP 整理概念图与单镜头提示词、交接实际媒体，或获取网站生成任务与素材并由当前 agent 完整实现网站；保留旧视频合成与网站文件。
 description_zh: 在 WorkBuddy 对话中完成概念图、单镜头视频和网站生成任务交接。
 description_en: Prepare project prompts and media handoffs, generate single shots, and implement websites from Workbench request bundles using the current agent.
-version: 0.10.0
+version: 0.11.0
 author: CreativityWorkbench
 ---
 
@@ -49,7 +49,7 @@ author: CreativityWorkbench
 
 ## 验收与传参兼容
 
-本版要求核心协议 13、31 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
+本版要求核心协议 14、31 个工具。遇到数组传参报错，或准备报告小说／媒体／网站验收结果时，读取 [验收与传参规则](references/acceptance.md)。保留已有版本冲突、幂等重试和实际文件交付规则。
 
 ## 文创文旅网站与主题视觉素材
 
